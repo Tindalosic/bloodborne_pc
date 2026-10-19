@@ -1243,6 +1243,29 @@ EXTRA_TRANSLATIONS = {
         '配 is the version the text was translated from, not the voice track: voices are the row above.':
             '「配」指译文所依据的版本（英/日文剧本），不是配音；配音由上面那一行单独选择。',
         'Download the Chinese retranslation (Nexus Mods)': '下载中文重译模组（Nexus Mods）',
+        'About': '关于',
+        'Achievements': '成就',
+        'Controls': '操作',
+        'What this build is, who made it and where to report problems.': '本构建是什么、作者是谁、遇到问题去哪里反馈。',
+        'Upstream project': '上游项目',
+        'Bloodborne for Windows is a native Windows port of the PlayStation 4 game, by Supermedo Mohammed Albarghouthi. The original project is here:':
+            'Bloodborne for Windows 是把 PlayStation 4 版游戏原生移植到 Windows 的项目，作者 Supermedo Mohammed Albarghouthi。原项目地址：',
+        'Downloads and release notes': '下载与更新日志',
+        'This build': '本分支',
+        'This is a fork of the upstream project. On top of it:': '这是上游项目的分支，在它之上增加了：',
+        '• Game text languages: all 21 the disc carries, including Chinese (Simplified), Chinese (Traditional) and Korean, each falling back to English when a file is missing.':
+            '• 游戏文本语言：光盘里自带的全部 21 种，含简体中文、繁體中文、한국어；缺文件时回退英文。',
+        '• Patches: every community patch listed per file, ticked one by one, with a download button that refreshes the list from the shadPS4 patch repository.':
+            '• 补丁：社区补丁按文件分组逐条勾选，并有一键从 shadPS4 补丁库下载更新的按钮。',
+        '• Achievements: Chinese names and descriptions, and launcher texts can be overridden with locale packs (see docs/TRANSLATING.md).':
+            '• 成就：奖杯名称与描述提供中文；启动器文本可用语言包覆盖（见 docs/TRANSLATING.md）。',
+        'This fork': '本分支地址',
+        'Credits': '致谢',
+        "Graphics translation is built on shadPS4. The Hunter's Dream connection is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie. Community patch lists come from the shadPS4 patch repository and their authors.":
+            '图形翻译基于 shadPS4；The Hunter\'s Dream 连接是 Awaken 对 bbhost 网络代码的移植，bbhost 与 The Hunter\'s Dream 由 droogie 开发；社区补丁列表来自 shadPS4 补丁库及各位作者。',
+        'License and legal': '许可与法律信息',
+        'No game files are included: you need your own decrypted dump of Bloodborne (CUSA03173). Version 1.09 is needed for the community patches. This project is not affiliated with Sony Interactive Entertainment or FromSoftware and is distributed under the GNU General Public License v2.0 or later (see LICENSE).':
+            '不含任何游戏文件：需要你自己的血源诅咒（CUSA03173）解密转储。社区补丁需要 1.09 版。本项目与 Sony Interactive Entertainment、FromSoftware 无关，按 GNU GPL v2.0 或更高版本分发（见 LICENSE）。',
     },
     'ja': {
         'Chinese (Simplified)': '簡体字中国語',

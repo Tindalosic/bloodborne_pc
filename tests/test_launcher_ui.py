@@ -128,5 +128,44 @@ class LauncherWindowTests(unittest.TestCase):
             self.launcher.webbrowser.open = original
         self.assertEqual(opened, [self.launcher.RETRANSLATION_URL])
 
+    def test_about_page_points_at_the_upstream_project(self):
+        # The fork has to say where it came from: the About page carries the upstream address.
+        page = self.app.pages['about']
+        texts = []
+
+        def walk(widget):
+            for child in widget.winfo_children():
+                if 'text' in child.keys():
+                    texts.append(str(child.cget('text')))
+                walk(child)
+
+        walk(page)
+        joined = '\n'.join(texts)
+        self.assertIn('github.com/Supermedo/bloodborne_pc', joined,
+                      'the About page does not link the upstream project')
+        self.assertIn('关于', joined + '\n'.join(str(w.cget('text')) for w in self.widgets(self.tk.Label)),
+                      'the About page is not translated')
+        self.assertNotIn('discord.gg', joined.lower())
+
+    def test_about_page_link_opens_the_project(self):
+        page = self.app.pages['about']
+        links = []
+
+        def find(widget):
+            for child in widget.winfo_children():
+                if 'text' in child.keys() and str(child.cget('text')).endswith('Supermedo/bloodborne_pc'):
+                    links.append(child)
+                find(child)
+
+        find(page)
+        self.assertTrue(links, 'no upstream link label on the About page')
+        opened = []
+        original = self.launcher.webbrowser.open
+        self.launcher.webbrowser.open = lambda url, *args, **kwargs: opened.append(url)
+        try:
+            links[0].event_generate('<Button-1>')
+        finally:
+            self.launcher.webbrowser.open = original
+        self.assertEqual(opened, [self.launcher.PROJECT_URL])
 if __name__ == '__main__':
     unittest.main()

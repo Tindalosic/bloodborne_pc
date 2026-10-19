@@ -7,7 +7,7 @@ The original PlayStation 4 game runs directly on your PC: its own x86-64 code ru
 and the graphics are translated to Vulkan. No emulator window, no setup scripts: unpack the zip,
 start `Bloodborne.exe`, pick your game folder and press **PLAY**.
 
-**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join the Discord](https://discord.gg/yTMG8c4Bqm)**  **[Join X,com](https://x.com/SuperMedoPorts)**
+**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join X,com](https://x.com/SuperMedoPorts)**
 Check my other ports 
 https://nativeretro.com/
 
@@ -99,15 +99,15 @@ shadNet server (from the [shadp2p](https://github.com/Wozzardman/shadp2p) projec
 put its address in **Server address**.
 
 Playing with bbhost players on The Hunter's Dream's co-op pool is off in this port until it
-works properly with their server. Please don't ask The Hunter's Dream for help with bbport: use
-our [Discord server](https://discord.gg/yTMG8c4Bqm) instead.
+works properly with their server. Please don't ask The Hunter's Dream for help with bbport:
+open an [issue](https://github.com/Supermedo/bloodborne_pc/issues) on the project instead.
 
 ## Known issues
 
 - Some AMD graphics cards may still crash when the game world loads; please send
   `user\last_run.log` if yours does.
 - Online play is new. Messages, bloodstains, ghosts and summons with the bells work on the
-  default server; please report how it goes on Discord.
+  default server; please report how it goes in an [issue](https://github.com/Supermedo/bloodborne_pc/issues).
 - Keep the frame cap at 120 or lower. The sprint that stayed at half speed above 90 FPS is
   fixed, but the game's own timing above 120 FPS has not been checked everywhere.
 - Intel 2nd and 3rd generation processors run with translated instructions (best effort):
@@ -115,7 +115,7 @@ our [Discord server](https://discord.gg/yTMG8c4Bqm) instead.
 
 ## Problems and feedback
 
-Ask on the [Discord server](https://discord.gg/yTMG8c4Bqm), or open an [issue](https://github.com/Supermedo/bloodborne_pc/issues) and attach
+Open an [issue](https://github.com/Supermedo/bloodborne_pc/issues) and attach
 `user\last_run.log` from the game folder, with your graphics card and what happened.
 If the game shows only a black screen, try **Advanced → Clear shader cache** first.
 Crashes on AMD RDNA2 cards, slow FSR 4 and online errors are collected in

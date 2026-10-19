@@ -53,7 +53,7 @@ Online play (beta)
   same co-op server. Summoning between players is not confirmed yet.
 - Playing with bbhost players on The Hunter's Dream's co-op pool is off in this port until it
   works properly with their server. Please don't ask The Hunter's Dream for help with bbport:
-  use our Discord server (https://discord.gg/yTMG8c4Bqm) instead.
+  open an issue at https://github.com/Supermedo/bloodborne_pc/issues instead.
 
 Cheats
 - The "Cheats" page has cheats (never die, enemies do not see or hear you, Rally never fades,

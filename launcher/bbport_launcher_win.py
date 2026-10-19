@@ -46,6 +46,9 @@ VERSION = '1.9.2'
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
 RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
 RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
+# The upstream project this build is forked from; shown on the About page.
+PROJECT_URL = 'https://github.com/Supermedo/bloodborne_pc'
+FORK_URL = 'https://github.com/Tindalosic/bloodborne_pc'
 RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
 # The oldest version Advanced > Other versions offers: older ones cannot install themselves the
 # same way (--install-update) or read today's settings.
@@ -695,6 +698,7 @@ class Launcher:
         s.configure('TFrame', background=PANEL)
         s.configure('TLabel', background=PANEL, foreground=TEXT)
         s.configure('Muted.TLabel', background=PANEL, foreground=MUTED, font=('Segoe UI', 9))
+        s.configure('Link.TLabel', background=PANEL, foreground=GOLD, font=('Segoe UI', 9, 'underline'))
         s.configure('Section.TLabel', background=PANEL, foreground=GOLD, font=('Georgia', 13))
         s.configure('Code.TLabel', background=PANEL, foreground=GOLD, font=('Consolas', 22, 'bold'))
         s.configure('TCheckbutton', background=PANEL, foreground=TEXT, padding=(0, 3))
@@ -784,6 +788,12 @@ class Launcher:
         self.ttk.Label(parent, text=text, style='Muted.TLabel', wraplength=self.px(680), justify='left').grid(
             row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
 
+    def link(self, parent, url, text=None, top=4):
+        label = self.ttk.Label(parent, text=text or url, style='Link.TLabel', cursor='hand2')
+        label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
+        label.bind('<Button-1>', lambda _e: webbrowser.open(url))
+        return label
+
     def section(self, parent, title, top=18):
         self.ttk.Label(parent, text=title, style='Section.TLabel').grid(
             row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 2))
@@ -846,6 +856,7 @@ class Launcher:
                             ('trophies', _('Achievements', 'Достижения')),
                             ('controls', _('Controls', 'Управление')),
                             ('advanced', _('Advanced', 'Дополнительно')),
+                            ('about', _('About', 'О программе')),
                             ('log', _('Log', 'Журнал'))):
             item = tk.Label(side, text='    ' + title, bg=BG, fg=TEXT, anchor='w', font=('Segoe UI', 11),
                             pady=10, cursor='hand2')
@@ -887,6 +898,7 @@ class Launcher:
         self.build_trophies()
         self.build_controls()
         self.build_advanced()
+        self.build_about()
         self.build_log()
         self.root.bind_all('<MouseWheel>', self.wheel)
         self.refresh_status()
@@ -1933,6 +1945,42 @@ class Launcher:
                                                 'Слои валидации Vulkan (нужен Vulkan SDK; сильно замедляет)'))
         self.row(f, _('Extra variables', 'Доп. переменные'), ttk.Entry(f, textvariable=self.var('extra_env', 'app'), width=58),
                  _('NAME=value pairs separated by spaces (README lists them).', 'Пары ИМЯ=значение через пробел (список в README).'))
+
+    def build_about(self):
+        ttk = self.ttk
+        f = self.scrolled_page('about', _('About', 'О программе'),
+                               _('What this build is, who made it and where to report problems.',
+                                 'Что это за сборка, кто её сделал и куда сообщать о проблемах.'))
+        self.section(f, _('Upstream project', 'Исходный проект'), top=4)
+        self.note(f, _('Bloodborne for Windows is a native Windows port of the PlayStation 4 game, by '
+                       'Supermedo Mohammed Albarghouthi. The original project is here:',
+                       'Bloodborne for Windows — нативный порт игры для PlayStation 4 от Supermedo '
+                       'Mohammed Albarghouthi. Исходный проект:'), top=2)
+        self.link(f, PROJECT_URL)
+        self.link(f, RELEASES_PAGE, _('Downloads and release notes', 'Загрузки и список изменений'), top=2)
+        self.section(f, _('This build', 'Эта сборка'))
+        self.note(f, _('This is a fork of the upstream project. On top of it:',
+                       'Это форк исходного проекта. Дополнительно:'), top=2)
+        self.note(f, _('• Game text languages: all 21 the disc carries, including Chinese (Simplified), '
+                       'Chinese (Traditional) and Korean, each falling back to English when a file is '
+                       'missing.',) , top=6)
+        self.note(f, _('• Patches: every community patch listed per file, ticked one by one, with a '
+                       'download button that refreshes the list from the shadPS4 patch repository.',
+                       ) , top=4)
+        self.note(f, _('• Achievements: Chinese names and descriptions, and launcher texts can be '
+                       'overridden with locale packs (see docs/TRANSLATING.md).',), top=4)
+        self.link(f, FORK_URL, FORK_URL, top=8)
+        self.section(f, _('Credits', 'Благодарности'))
+        self.note(f, _('Graphics translation is built on shadPS4. The Hunter\'s Dream connection is '
+                       'Awaken\'s port of bbhost\'s network code; bbhost and The Hunter\'s Dream are by '
+                       'droogie. Community patch lists come from the shadPS4 patch repository and their '
+                       'authors.',), top=2)
+        self.section(f, _('License and legal', 'Лицензия и правовая информация'))
+        self.note(f, _('No game files are included: you need your own decrypted dump of Bloodborne '
+                       '(CUSA03173). Version 1.09 is needed for the community patches. This project is '
+                       'not affiliated with Sony Interactive Entertainment or FromSoftware and is '
+                       'distributed under the GNU General Public License v2.0 or later (see LICENSE).',
+                       ), top=2)
 
     def build_log(self):
         tk, ttk = self.tk, self.ttk
