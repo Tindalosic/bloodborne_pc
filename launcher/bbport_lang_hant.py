@@ -177,7 +177,7 @@ TEXT = {
     'How far the direct camera turns per mouse movement (1.00 = 900 counts per radian).': '直接模式下滑鼠每移動一格轉動多少（1.00 = 每弧度 900 計數）。',
     'How fast the camera turns for a given mouse movement in stick emulation.': '搖桿模擬下，滑鼠移動量對應的視角轉速。',
     'If the game only shows a black screen, this usually helps.': '如果遊戲只顯示黑屏，這通常能解決。',
-    'If you use the Chinese retranslation mod, choose its slot below.': '如果使用中文重譯模組，請按下方對應槽位選擇語言。',
+    'If you use the Chinese retranslation mod, see here.': '如果使用中文重譯模組請看這裡',
     'Immediate (tearing)': 'Immediate（有撕裂）',
     "In the game: Insert or L3+R3\nopens the port's menu.": '遊戲中：Insert 或 L3+R3\n開啟移植版選單。',
     'Install version {} now? The launcher closes, installs it and opens again. Saves and settings are kept.': '現在安裝版本 {} 嗎？啟動器會關閉、完成安裝後重新開啟。存檔和設定會保留。',

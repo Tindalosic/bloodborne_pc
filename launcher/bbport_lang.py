@@ -1254,8 +1254,8 @@ EXTRA_TRANSLATIONS = {
         'Voice language': '语音语言',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '「与游戏相同」沿用游戏原本的语音设置；其他选项使用可用的音轨。',
-        'If you use the Chinese retranslation mod, choose its slot below.':
-            '如果使用中文重译模组，请按下方对应槽位选择语言。',
+        'If you use the Chinese retranslation mod, see here.':
+            '如果使用中文重译模组请看这里',
         'Chinese (Simplified) — English-based Simplified Chinese (原简中)':
             '简体中文 —— 英配简中（以英文版为底本，替换原简中）',
         'Chinese (Traditional) — English-based Traditional Chinese (原繁中)':
