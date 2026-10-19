@@ -1224,6 +1224,26 @@ EXTRA_TRANSLATIONS = {
     },
     # Game language names (LANGUAGES in bbport_launcher_win.py).
     'zh': {
+        'The Old Hunters · Windows port': '老猎人 · Windows 原生移植',
+        'co-op test build': '联机测试版',
+        'English (US)': '英语（美国）',
+        'Japanese': '日语',
+        'Russian': '俄语',
+        'French': '法语',
+        'Spanish (Spain)': '西班牙语（西班牙）',
+        'Spanish (Latin America)': '西班牙语（拉美）',
+        'German': '德语',
+        'Italian': '意大利语',
+        'Dutch': '荷兰语',
+        'Português (Portugal)': '葡萄牙语（葡萄牙）',
+        'Português (Brasil)': '葡萄牙语（巴西）',
+        'Finnish': '芬兰语',
+        'Swedish': '瑞典语',
+        'Danish': '丹麦语',
+        'Norwegian': '挪威语',
+        'Polish': '波兰语',
+        'English (UK)': '英语（英国）',
+        'Turkish': '土耳其语',
         'Chinese (Simplified)': '简体中文',
         'Chinese (Traditional)': '繁體中文',
         'Korean': '한국어',
@@ -1253,6 +1273,8 @@ EXTRA_TRANSLATIONS = {
         'Downloads and release notes': '下载与更新日志',
         'This build': '本分支',
         'This is a fork of the upstream project. On top of it:': '这是上游项目的分支，在它之上增加了：',
+        'This is a fork of the upstream project, maintained by Tindalosic. On top of it:':
+            '这是上游项目的分支，由 Tindalosic 维护。在它之上增加了：',
         '• Game text languages: all 21 the disc carries, including Chinese (Simplified), Chinese (Traditional) and Korean, each falling back to English when a file is missing.':
             '• 游戏文本语言：光盘里自带的全部 21 种，含简体中文、繁體中文、한국어；缺文件时回退英文。',
         '• Patches: every community patch listed per file, ticked one by one, with a download button that refreshes the list from the shadPS4 patch repository.':

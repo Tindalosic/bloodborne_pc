@@ -582,8 +582,12 @@ def game_environment(s):
 # ---------------------------------------------------------------------------------------------
 # The window.
 
-BG, PANEL, CARD, LINE = '#0e0c0b', '#151210', '#1c1815', '#2e2722'
-TEXT, MUTED, GOLD, BLOOD, BLOOD_HI = '#e9e2d6', '#9a8f80', '#c8a96a', '#7c1717', '#9e2222'
+BG, PANEL, CARD, LINE = '#08070a', '#111014', '#1b1820', '#2f2a35'
+TEXT, MUTED, GOLD, BLOOD, BLOOD_HI = '#ece5d8', '#8e8695', '#d8b46a', '#8a1a1a', '#b32b2b'
+# The sidebar and the small chrome around the pages: a hover tint and the gold bar that marks the
+# open page.  Kept apart from the settings widgets' palette so the pages stay warm and the frame
+# goes cold.
+NAV_HOVER, GOLD_HI, HAIRLINE = '#191620', '#f0d39a', '#251f29'
 # Trophy glyphs only: the grade colours of the console, toned to the launcher's palette.
 TROPHY_COLORS = {trophies.PLATINUM: '#c4ccd8', trophies.GOLD: GOLD, trophies.SILVER: '#adb1b7',
                  trophies.BRONZE: '#b0774f'}
@@ -698,7 +702,8 @@ class Launcher:
         s.configure('TLabel', background=PANEL, foreground=TEXT)
         s.configure('Muted.TLabel', background=PANEL, foreground=MUTED, font=('Segoe UI', 9))
         s.configure('Link.TLabel', background=PANEL, foreground=GOLD, font=('Segoe UI', 9, 'underline'))
-        s.configure('Section.TLabel', background=PANEL, foreground=GOLD, font=('Georgia', 13))
+        s.configure('Section.TLabel', background=PANEL, foreground=GOLD_HI, font=('Georgia', 13))
+        s.configure('Page.TLabel', background=PANEL, foreground=TEXT, font=('Georgia', 21))
         s.configure('Code.TLabel', background=PANEL, foreground=GOLD, font=('Consolas', 22, 'bold'))
         s.configure('TCheckbutton', background=PANEL, foreground=TEXT, padding=(0, 3))
         s.map('TCheckbutton', background=[('active', PANEL)], foreground=[('disabled', MUTED)])
@@ -715,8 +720,8 @@ class Launcher:
         s.map('Slot.TButton', background=[('active', LINE), ('disabled', CARD)], foreground=[('disabled', TEXT)])
         s.configure('Listen.TButton', background=LINE, foreground=GOLD, padding=(6, 5), font=('Segoe UI', 9))
         s.map('Listen.TButton', background=[('disabled', LINE)], foreground=[('disabled', GOLD)])
-        s.configure('Play.TButton', background=BLOOD, foreground='#f4ece0', font=('Georgia', 15, 'bold'),
-                    padding=(36, 10), borderwidth=0)
+        s.configure('Play.TButton', background=BLOOD, foreground='#f7efe2', font=('Georgia', 16, 'bold'),
+                    padding=(44, 12), borderwidth=0)
         s.map('Play.TButton', background=[('active', BLOOD_HI), ('disabled', '#3a2420')],
               foreground=[('disabled', '#8a7a70')])
         s.configure('Horizontal.TProgressbar', background=GOLD, troughcolor=CARD, bordercolor=LINE)
@@ -794,8 +799,11 @@ class Launcher:
         return label
 
     def section(self, parent, title, top=18):
+        r = self.next_row(parent)
         self.ttk.Label(parent, text=title, style='Section.TLabel').grid(
-            row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 2))
+            row=r, column=0, columnspan=2, sticky='w', pady=(top, 0))
+        self.tk.Frame(parent, bg=HAIRLINE, height=1).grid(
+            row=r + 1, column=0, columnspan=2, sticky='ew', pady=(5, 3))
 
     def folder(self, parent, key, title, prompt, hint=None, on_change=None):
         ttk = self.ttk
@@ -818,10 +826,11 @@ class Launcher:
         """A settings page: a heading and content that scrolls vertically."""
         tk, ttk = self.tk, self.ttk
         outer = ttk.Frame(self.content)
-        head = ttk.Frame(outer, padding=(28, 22, 28, 6))
+        head = ttk.Frame(outer, padding=(30, 26, 30, 6))
         head.pack(fill='x')
-        ttk.Label(head, text=title, background=PANEL, foreground=TEXT, font=('Georgia', 20)).pack(anchor='w')
-        ttk.Label(head, text=subtitle, style='Muted.TLabel').pack(anchor='w')
+        ttk.Label(head, text=title, style='Page.TLabel').pack(anchor='w')
+        ttk.Label(head, text=subtitle, style='Muted.TLabel').pack(anchor='w', pady=(3, 0))
+        tk.Frame(head, bg=HAIRLINE, height=1).pack(fill='x', pady=(13, 0))
         canvas = tk.Canvas(outer, bg=PANEL, highlightthickness=0, bd=0)
         bar = ttk.Scrollbar(outer, orient='vertical', command=canvas.yview)
         inner = ttk.Frame(canvas, padding=(28, 0, 28, 24))
@@ -839,14 +848,29 @@ class Launcher:
     # ---- layout ------------------------------------------------------------------------------
     def build(self):
         tk, ttk = self.tk, self.ttk
-        side = tk.Frame(self.root, bg=BG, width=self.px(220))
+        side = tk.Frame(self.root, bg=BG, width=self.px(238))
         side.pack(side='left', fill='y')
         side.pack_propagate(False)
-        tk.Label(side, text='BLOODBORNE', bg=BG, fg=GOLD, font=('Georgia', 16)).pack(anchor='w', padx=22, pady=(24, 0))
         self.side = side
-        tk.Label(side, text=_('by Super Medo'), bg=BG, fg=TEXT, font=('Segoe UI', 10)).pack(anchor='w', padx=22)
-        tk.Label(side, text=_('native port · Windows', 'нативный порт · Windows') + f'  ·  v{VERSION}' + ('\n' + _('co-op test build') if COOP_TEST else ''), bg=BG, fg=MUTED, justify='left',
-                 font=('Segoe UI', 9)).pack(anchor='w', padx=22, pady=(0, 20))
+        brand = tk.Frame(side, bg=BG)
+        brand.pack(fill='x', padx=24, pady=(26, 0))
+        tk.Label(brand, text='BLOODBORNE', bg=BG, fg=GOLD, font=('Georgia', 17),
+                 anchor='w').pack(anchor='w')
+        mark = tk.Frame(brand, bg=GOLD, height=1, width=self.px(38))
+        mark.pack(anchor='w', pady=(8, 9))
+        mark.pack_propagate(False)
+        tk.Label(brand, text=_('The Old Hunters · Windows port', 'The Old Hunters · порт для Windows'),
+                 bg=BG, fg=MUTED, font=('Segoe UI', 9), anchor='w').pack(anchor='w')
+        tk.Label(brand, text='by Tindalosic', bg=BG, fg=TEXT, font=('Segoe UI', 10, 'bold'),
+                 anchor='w').pack(anchor='w', pady=(7, 3))
+        badge = tk.Frame(brand, bg=BG)
+        badge.pack(anchor='w')
+        tk.Label(badge, text=f'v{VERSION}', bg=CARD, fg=GOLD_HI, font=('Segoe UI', 8),
+                 padx=7, pady=2).pack(side='left')
+        if COOP_TEST:
+            tk.Label(badge, text=_('co-op test build', 'тестовая сборка кооператива'), bg=CARD, fg=MUTED,
+                     font=('Segoe UI', 8), padx=7, pady=2).pack(side='left', padx=(6, 0))
+        tk.Frame(side, bg=BG, height=18).pack(fill='x')
         self.nav, self.current_page = {}, None
         for name, title in (('play', _('Play', 'Играть')), ('graphics', _('Graphics', 'Графика')),
                             ('display', _('Display & FPS', 'Экран и FPS')), ('game', _('Game & effects', 'Игра и эффекты')),
@@ -857,13 +881,19 @@ class Launcher:
                             ('advanced', _('Advanced', 'Дополнительно')),
                             ('about', _('About', 'О программе')),
                             ('log', _('Log', 'Журнал'))):
-            item = tk.Label(side, text='    ' + title, bg=BG, fg=TEXT, anchor='w', font=('Segoe UI', 11),
-                            pady=10, cursor='hand2')
-            item.pack(fill='x')
-            item.bind('<Button-1>', lambda _e, n=name: self.show(n))
-            item.bind('<Enter>', lambda _e, n=name: n != self.current_page and self.nav[n].configure(bg='#1a1613'))
-            item.bind('<Leave>', lambda _e, n=name: n != self.current_page and self.nav[n].configure(bg=BG))
-            self.nav[name] = item
+            holder = tk.Frame(side, bg=BG)
+            holder.pack(fill='x')
+            bar = tk.Frame(holder, bg=BG, width=self.px(3))
+            bar.pack(side='left', fill='y')
+            bar.pack_propagate(False)
+            item = tk.Label(holder, text=title, bg=BG, fg=TEXT, anchor='w', font=('Segoe UI', 10),
+                            padx=self.px(21), pady=9, cursor='hand2')
+            item.pack(side='left', fill='x', expand=True)
+            for widget in (holder, item):
+                widget.bind('<Button-1>', lambda _e, n=name: self.show(n))
+                widget.bind('<Enter>', lambda _e, n=name: self.nav_hover(n, True))
+                widget.bind('<Leave>', lambda _e, n=name: self.nav_hover(n, False))
+            self.nav[name] = {'holder': holder, 'bar': bar, 'item': item}
         tk.Frame(side, bg=BG).pack(fill='both', expand=True)
         self.update_box = None
         self.version_window = None  # Advanced > Other versions
@@ -877,9 +907,10 @@ class Launcher:
         bar = tk.Frame(right, bg=BG, height=72)
         bar.pack(fill='x', side='bottom')
         bar.pack_propagate(False)
+        tk.Frame(right, bg=HAIRLINE, height=1).pack(fill='x', side='bottom')
         self.status = tk.Label(bar, text='', bg=BG, fg=MUTED, font=('Segoe UI', 10), anchor='w', justify='left')
         self.status.pack(side='left', padx=24)
-        self.play_button = ttk.Button(bar, text=_('PLAY', 'ИГРАТЬ'), style='Play.TButton', command=self.play)
+        self.play_button = ttk.Button(bar, text='▶  ' + _('PLAY', 'ИГРАТЬ'), style='Play.TButton', command=self.play)
         self.play_button.pack(side='right', padx=(10, 24), pady=11)
         self.stop_button = ttk.Button(bar, text=_('Stop', 'Остановить'), command=self.stop, state='disabled')
         self.stop_button.pack(side='right', pady=11)
@@ -908,13 +939,25 @@ class Launcher:
                 and 'popdown' not in str(event.widget):
             page.scroll(int(-event.delta / 120))
 
+    def nav_hover(self, name, inside):
+        """Tint a sidebar row on hover; the open page keeps its own colours."""
+        row = self.nav.get(name)
+        if not row or name == self.current_page:
+            return
+        row['holder'].configure(bg=NAV_HOVER if inside else BG)
+        row['item'].configure(bg=NAV_HOVER if inside else BG, fg=GOLD if inside else TEXT)
+
     def show(self, name):
         for page in self.pages.values():
             page.pack_forget()
         self.pages[name].pack(fill='both', expand=True)
         self.current_page = name
-        for n, item in self.nav.items():
-            item.configure(bg=PANEL if n == name else BG, fg=GOLD if n == name else TEXT)
+        for n, row in self.nav.items():
+            active = n == name
+            row['holder'].configure(bg=CARD if active else BG)
+            row['item'].configure(bg=CARD if active else BG, fg=GOLD_HI if active else TEXT,
+                                  font=('Segoe UI', 10, 'bold' if active else 'normal'))
+            row['bar'].configure(bg=GOLD if active else BG)
         if name == 'mods':
             self.refresh_lists()
         elif name == 'graphics':
@@ -1958,8 +2001,8 @@ class Launcher:
         self.link(f, PROJECT_URL)
         self.link(f, RELEASES_PAGE, _('Downloads and release notes', 'Загрузки и список изменений'), top=2)
         self.section(f, _('This build', 'Эта сборка'))
-        self.note(f, _('This is a fork of the upstream project. On top of it:',
-                       'Это форк исходного проекта. Дополнительно:'), top=2)
+        self.note(f, _('This is a fork of the upstream project, maintained by Tindalosic. On top of it:',
+                       'Это форк исходного проекта, его поддерживает Tindalosic. Дополнительно:'), top=2)
         self.note(f, _('• Game text languages: all 21 the disc carries, including Chinese (Simplified), '
                        'Chinese (Traditional) and Korean, each falling back to English when a file is '
                        'missing.',) , top=6)
@@ -1968,7 +2011,8 @@ class Launcher:
                        ) , top=4)
         self.note(f, _('• Achievements: Chinese names and descriptions, and launcher texts can be '
                        'overridden with locale packs (see docs/TRANSLATING.md).',), top=4)
-        self.link(f, FORK_URL, FORK_URL, top=8)
+        self.note(f, _('This fork:', 'Этот форк:'), top=8)
+        self.link(f, FORK_URL, FORK_URL, top=2)
         self.section(f, _('Credits', 'Благодарности'))
         self.note(f, _('Graphics translation is built on shadPS4. The Hunter\'s Dream connection is '
                        'Awaken\'s port of bbhost\'s network code; bbhost and The Hunter\'s Dream are by '
