@@ -218,4 +218,6 @@ ZH2 = {
         '还没有社区补丁列表：「下载社区补丁」会获取它。',
     'Artwork: drop hero.png or empty.png into': '美术素材：把 hero.png 或 empty.png 放进',
     '(SteamGridDB has good ones)': '（SteamGridDB 上有很多好的）',
+    'Animate the window (hover, banner pan)': '界面动效（悬停、封面平移）',
+    'Turning it off also stops the timer that drives the animations.': '关闭后，驱动这些动画的定时器也会停止。',
 }
