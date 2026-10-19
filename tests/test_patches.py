@@ -173,7 +173,9 @@ class ExternalPatchTests(unittest.TestCase):
             self.assertEqual(writes, [(0x2000, (0x12345678).to_bytes(4, 'little'))])
 
     def test_built_in_file_is_not_external(self):
-        self.assertEqual(external_patches(XML.parent), [])
+        # patches/ also holds the community catalogue, so only the built-in file must stay out.
+        found = external_patches(XML.parent)
+        self.assertFalse([key for key, path, _meta in found if path.name == XML.name])
 
 
 FINGERPRINTED = """<?xml version="1.0"?>

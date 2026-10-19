@@ -130,6 +130,8 @@ def run_command():
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
+from bbport_patches import catalogue_path, describe as describe_catalogue, \
+    install as install_catalogue  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
                                   save_input_ini, save_mouse_settings, wheel_to_name, MAX_COMBO,
@@ -1336,8 +1338,13 @@ class Launcher:
                     on_change=self.refresh_lists)
         self.patches_frame = self.ttk.Frame(f)
         self.patches_frame.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(8, 0))
-        self.ttk.Button(f, text=_('Refresh', 'Обновить'), command=self.refresh_lists).grid(
-            row=self.next_row(f), column=0, sticky='w', pady=(14, 0))
+        line = self.ttk.Frame(f)
+        line.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(14, 0))
+        self.ttk.Button(line, text=_('Refresh', 'Обновить'), command=self.refresh_lists).pack(side='left')
+        self.ttk.Button(line, text=_('Download community patches', 'Скачать патчи сообщества'),
+                        command=self.download_patches).pack(side='left', padx=(8, 0))
+        self.patches_status = self.ttk.Label(line, style='Muted.TLabel', text='')
+        self.patches_status.pack(side='left', padx=(10, 0))
 
     def build_trophies(self):
         f = self.scrolled_page('trophies', _('Achievements', 'Достижения'),
@@ -2072,19 +2079,97 @@ class Launcher:
             ttk.Label(self.mods_frame, text=_('Not loaded: {}: {}', 'Не загружен: {}: {}').format(name, problem),
                       style='Muted.TLabel', wraplength=self.px(620), justify='left').pack(anchor='w', pady=(4, 0))
         chosen = load_json(DATA_DIR / 'patches.json', {})
-        found = external_patches(Path(self.var('patches_dir', 'app').get() or DATA_DIR / 'patches'), PATCH_VERSION)
+        folder = Path(self.var('patches_dir', 'app').get() or DATA_DIR / 'patches')
+        status = getattr(self, 'patches_status', None)
+        if status is not None and not getattr(self, 'patch_downloading', False) and not status.cget('text'):
+            count, when = describe_catalogue(catalogue_path(folder))
+            status.config(text=(_('{} community patches, updated {}', '{} патчей, обновлено {}').format(
+                count, time.strftime('%Y-%m-%d %H:%M', time.localtime(when))) if when and count else
+                _('No community list yet: Download community patches fetches it.',
+                  'Списка сообщества пока нет.')))
+        found = external_patches(folder, PATCH_VERSION)
         old = {n: v.get() for n, v in self.patch_vars.items()}
         self.patch_vars = {}
+        self.patch_metas = {}
         if not found:
-            ttk.Label(self.patches_frame, text=_('No patch files for version 1.09 yet.', 'Пока нет патчей для версии 1.09.'),
+            ttk.Label(self.patches_frame, text=_('No patch files for version 1.09 yet: Download community '
+                                                 'patches puts the shadPS4 list here.',
+                                                 'Пока нет патчей для версии 1.09.'),
                       style='Muted.TLabel').pack(anchor='w')
-        for key, _path, meta in found:
+        source = None
+        for key, path, meta in found:
+            if path.name != source:
+                # One header per file: a patch may exist in two files with different bytes, and
+                # then both are listed under their own file instead of one hiding the other.
+                source = path.name
+                count = sum(1 for item in found if item[1] == path)
+                ttk.Label(self.patches_frame, text=f'{source}  ({count})', style='Muted.TLabel').pack(
+                    anchor='w', pady=(8 if self.patch_metas else 0, 0))
             on = key in chosen.get('enabled', []) or (key not in chosen.get('disabled', []) and
                                                       meta.get('isEnabled', 'false').lower() == 'true')
             var = tk.BooleanVar(value=old.get(key, on))
             self.patch_vars[key] = var
+            self.patch_metas[key] = meta
             author = meta.get('Author')
-            ttk.Checkbutton(self.patches_frame, text=key + (f'  —  {author}' if author else ''), variable=var).pack(anchor='w')
+            note = (meta.get('Note') or '').strip().replace('\n', ' ')
+            text = key.split('/', 1)[-1] + (f'  —  {author}' if author else '')
+            if note:
+                text += '\n' + (note if len(note) <= 150 else note[:147] + '…')
+            ttk.Checkbutton(self.patches_frame, text=text, variable=var, wraplength=self.px(620),
+                            command=self.update_patch_conflicts).pack(anchor='w', pady=(3, 0))
+        self.patch_conflict_label = None
+        self.update_patch_conflicts()
+
+    def update_patch_conflicts(self):
+        """Names the checked pairs that write the same byte with different values.
+
+        Both still compile: the later patch wins, as in the emulator. Naming them is the point -
+        two cheats that both move the player, say, otherwise silently cancel each other out.
+        """
+        from patches import conflicts
+        if getattr(self, 'patch_conflict_label', None) is None:
+            self.patch_conflict_label = self.ttk.Label(self.patches_frame, style='Muted.TLabel',
+                                                       wraplength=self.px(620), justify='left', text='')
+            self.patch_conflict_label.pack(anchor='w', pady=(8, 0))
+        checked = [(key, None, meta) for key, meta in getattr(self, 'patch_metas', {}).items()
+                   if self.patch_vars.get(key) and self.patch_vars[key].get()]
+        self.patch_conflict_label.config(text='\n'.join(
+            _('{} and {} both write {:08x}: the later patch wins.',
+              '{} и {} пишут в {:08x}: побеждает последний.').format(one, other, address)
+            for one, other, address in conflicts(checked)[:3]))
+
+    def download_patches(self):
+        """Replaces the bundled community list; the selections in patches.json are kept."""
+        if getattr(self, 'patch_downloading', False):
+            return
+        self.patch_downloading = True
+        label = getattr(self, 'patches_status', None)
+        if label is not None:
+            label.config(text=_('Downloading…', 'Скачивание…'))
+        folder = Path(self.var('patches_dir', 'app').get() or DATA_DIR / 'patches')
+
+        def work():
+            try:
+                result = install_catalogue(folder)
+            except Exception as error:  # network, format and disk errors all end up here
+                result = error
+            self.ui_calls.put(lambda: self.patches_downloaded(result))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def patches_downloaded(self, result):
+        self.patch_downloading = False
+        label = getattr(self, 'patches_status', None)
+        if label is not None:
+            if isinstance(result, Exception):
+                label.config(text=_('Download failed: {}', 'Ошибка загрузки: {}').format(result))
+            else:
+                path, count, backup = result
+                text = _('{} patches in {}', '{} патчей в {}').format(count, path.name)
+                if backup is not None:
+                    text += _(' (the previous file is kept as {})', ' (прежний файл: {})').format(backup.name)
+                label.config(text=text)
+        self.refresh_lists()
 
     def move_mod(self, index, step):
         other = index + step

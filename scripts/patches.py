@@ -316,18 +316,46 @@ BLOODBORNE_IDS={'CUSA00900','CUSA00207','CUSA00208','CUSA00299','CUSA01363',
                 'CUSA03179','CUSA03173','CUSA03014','CUSA03023'}
 
 
+def file_digest(path):
+    try: return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError: return None
+
+
+def xml_body(data):
+    """data without a byte-order mark or XML declarations.
+
+    A declaration is only legal as the very first bytes, and the community files put their comment
+    above it, so parsing the file as downloaded fails. Only the prolog is touched: a "<?xml" inside
+    a patch's own value is left alone, and callers that write the file put a declaration back."""
+    text=data.lstrip(b'\xef\xbb\xbf \t\r\n')
+    cut=text.lower().find(b'<patches')
+    prolog,rest=(text,b'') if cut<0 else (text[:cut],text[cut:])
+    while True:
+        start=prolog.find(b'<?xml')
+        if start<0: break
+        end=prolog.find(b'?>',start)
+        if end<0: break
+        prolog=prolog[:start]+prolog[end+2:].lstrip(b' \t\r\n')
+    return prolog+rest
+
+
 def external_patches(directory, app_version='01.09', exclude=Path(__file__).resolve().parent.parent/'patches/Bloodborne.xml'):
     """[(key, file, metadata)] of eboot patches for this version in directory/*.xml.
     key is "<file name>/<patch name>" (the launcher's selection, patches.json)."""
     found=[]
     directory=Path(directory)
+    # The built-in file drives the launcher's own effects (bbport.ini) and is listed by the game
+    # version check instead: as a third-party file it would be applied twice, and unpacked apps
+    # keep it outside the scripts folder, so compare content rather than the checkout path.
+    skip=file_digest(exclude)
     for path in sorted(directory.glob('*.xml')) if directory.is_dir() else []:
         if path.resolve()==Path(exclude).resolve(): continue  # the built-in file (patches/ in a checkout)
+        if skip and file_digest(path)==skip: continue
         # Left by bbbridge's app: play logs every 5 s to The Hunter's Dream.
         if path.name.lower()=='bbbridge-live-map.xml': continue
         try:
-            root=ET.parse(path).getroot()
-        except ET.ParseError as error:
+            root=ET.fromstring(xml_body(path.read_bytes()))
+        except (ET.ParseError,OSError) as error:
             print(f'Patches: {path.name}: {error}',file=sys.stderr)
             continue
         ids={e.text.strip() for e in root.iter('ID') if e.text}
@@ -347,6 +375,34 @@ def external_selection(found, config):
     enabled,disabled=set(settings.get('enabled',[])),set(settings.get('disabled',[]))
     return [(key,path,meta) for key,path,meta in found
             if key in enabled or (key not in disabled and meta.get('isEnabled','false').lower()=='true')]
+
+
+def patch_writes(meta):
+    """[(address, data)] of a patch's literal writes; unsupported lines are left out."""
+    writes=[]
+    for line in meta.iter('Line'):
+        try: writes.append((int(line.get('Address') or '',0),encode(line)))
+        except (TypeError,ValueError): continue
+    return writes
+
+
+def conflicts(selected):
+    """[(key, other key, address)] where two selected patches write the same address with
+    different bytes. Both still compile (the later one wins, as in the emulator); naming the
+    pair here is what the launcher's warning shows."""
+    owner={}
+    found=set()
+    for key,_path,meta in selected:
+        for address,data in patch_writes(meta):
+            for index,byte in enumerate(data):
+                slot=address+index
+                if slot in owner:
+                    other,value=owner[slot]
+                    if value!=byte and other!=key:
+                        found.add((other,key,slot) if other<key else (key,other,slot))
+                else:
+                    owner[slot]=(key,byte)
+    return sorted(found)
 
 
 def compile_external(selected, segments):
@@ -469,6 +525,9 @@ def main():
                 names=[n for n in names if n not in fps_names]
                 fps_count=0
             external+=ours
+        for other,key,address in conflicts(selected)[:10]:
+            print(f'Patches: warning: {other} and {key} both write 0x{address:08x}; '
+                  f'{key} is applied last',file=sys.stderr)
         writes+=external
     # BBPATCH2: the patch base, so the loader can rebase pointers the patches write into
     # relocated slots (60/90 FPS++ replace function pointers).

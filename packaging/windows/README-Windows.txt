@@ -79,7 +79,13 @@ Mods and patches
   enable and order them on "Mods & patches". The game files are never changed. Without Windows
   Developer Mode the port links folders with junctions and files with hard links; when the game
   is on another drive, the temporary mod view is made next to the game folder.
-- Third-party patches: shadPS4/GoldHEN XML files for 1.09 in patches\.
+- Third-party patches: shadPS4/GoldHEN XML files for 1.09 in patches\. The package ships the
+  shadPS4 community list (patches\shadps4-Bloodborne.xml, every entry off by default), so
+  "Mods & patches > Third-party patches" already lists the community patches and cheats: tick
+  what you want. "Download community patches" replaces that file with the current list, keeps
+  the previous one next to it as a .bak and leaves your own XML files and ticks alone. Two
+  ticked patches that write the same byte are named under the list: the later one still wins,
+  as in the emulator, so it is worth reading before starting the game.
 
 Credits
 - Online play: shadPS4 0.20's network code and shadNet by the shadPS4 team, put together by
