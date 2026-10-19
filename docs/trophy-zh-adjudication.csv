@@ -1,0 +1,41 @@
+﻿键值,注释(若有),官方英文,官方中文,模组原文,推荐名,裁定名,理由和问题
+trophy:0,Bloodborne / platinum / All trophies acquired. Hats off!,Bloodborne,Bloodborne,,Bloodborne,,官方简中保留英文名 Bloodborne，与 PS4 奖杯一致。
+trophy:1,"Bloodborne / gold / You lived through the hunt, and saw another day.",Yharnam Sunrise,亚南日出,,亚南日出,,官方译作「亚南」，社区通行「雅南」；站内术语不统一，需统一。
+trophy:2,"Bloodborne / gold / Captivated by the moon presence, you pledge to watch over the hunter's dream.",Honoring Wishes,履行愿望,,履行愿望,,
+trophy:3,"Bloodborne / gold / You became an infant Great One, lifting humanity into its next childhood.",Childhood's Beginning,童年的开始,,童年的开始,,
+trophy:4,"Bloodborne / gold / Defeat Yharnam, Blood Queen of the Old Labyrinth.","Yharnam, Pthumerian Queen",亚南，修梅里安女王,,亚南，修梅里安女王,,官方「修梅里安女王」，与圣杯「修梅露」同源却不同译法。
+trophy:5,Bloodborne / gold / Acquire all hunter weapons.,Hunter's Essence,猎人的精髓,,猎人的精髓,,
+trophy:6,Bloodborne / gold / Acquire all special hunter tools.,Hunter's Craft,猎人的手工,,猎人的手工,,
+trophy:7,Bloodborne / silver / Acquire a weapon of the highest level.,Weapon Master,武器大师,,武器大师,,
+trophy:8,Bloodborne / silver / Acquire an extremely precious blood gem.,Blood Gem Master,神血宝石大师,,神血宝石大师,,官方把 Blood Gem 译作「神血宝石」，与同表 #29/#30 的「血之宝石」不一致。
+trophy:9,Bloodborne / silver / Acquire an extremely precious Caryll Rune.,Rune Master,符文大师,,符文大师,,
+trophy:10,"Bloodborne / silver / Gain entry to Cainhurst, the lost and ruined castle.",Cainhurst,凯因赫斯特,,凯因赫斯特,,
+trophy:11,"Bloodborne / silver / Gain entry to the realm of the Choir, the high stratum of the Healing Church.",The Choir,圣诗班,,圣诗班,,
+trophy:12,"Bloodborne / silver / Discover the abandoned old workshop, the source of the hunter's dream.",The Source of the Dream,梦之源,,梦之源,,
+trophy:13,"Bloodborne / silver / Gain entry into the Byrgenwerth lecture building, that drifts within the realm of nightmare.",Nightmare Lecture Building,噩梦讲堂,,噩梦讲堂,,
+trophy:14,Bloodborne / bronze / Defeat the beast that once was Father Gascoigne.,Father Gascoigne,加斯科因神父,,加斯科因神父,,
+trophy:15,Bloodborne / bronze / Defeat the beast that once was Vicar Amelia.,Vicar Amelia,代理人阿梅利亚,,代理人阿梅利亚,,标题为「代理人阿梅利亚」，描述里却写「薇卡•阿梅利亚」；Vicar 在血源官中通常作「代理人」。
+trophy:16,Bloodborne / bronze / Defeat the Shadow of Yharnam.,Shadow of Yharnam,亚南的影子,,亚南的影子,,
+trophy:17,"Bloodborne / bronze / Defeat Great One: Rom, the Vacuous Spider.","Rom, the Vacuous Spider",罗姆，空虚的蜘蛛,,罗姆，空虚的蜘蛛,,官方语序「罗姆，空虚的蜘蛛」，描述里作「空虚的蜘蛛罗姆」。
+trophy:18,Bloodborne / bronze / Defeat the One Reborn.,The One Reborn,重生之神,,重生之神,,
+trophy:19,"Bloodborne / bronze / Defeat Micolash, Host of the Nightmare.","Micolash, Host of the Nightmare",米克拉什，噩梦之主,,米克拉什，噩梦之主,,官方「米克拉什」，社区多用「米克拉什/米科拉什」，英文 Micolash。
+trophy:20,Bloodborne / bronze / Defeat Great One: Mergo's Wet Nurse.,Mergo's Wet Nurse,墨戈的乳母,,墨戈的乳母,,官方「墨戈的乳母」，社区通行「梅高的乳母」（Mergo）。
+trophy:21,Bloodborne / bronze / Defeat Cleric Beast.,Cleric Beast,神职人员怪兽,,神职人员怪兽,,
+trophy:22,Bloodborne / bronze / Defeat Blood-starved Beast.,Blood-starved Beast,缺血的怪兽,,缺血的怪兽,,
+trophy:23,Bloodborne / bronze / Defeat the Witch of Hemwick.,The Witch of Hemwick,亨维科的女巫,,亨维科的女巫,,官方「亨维科」，社区「亨威克」（Hemwick）。
+trophy:24,Bloodborne / bronze / Defeat Darkbeast Paarl.,Darkbeast Paarl,黑暗怪兽帕阿尔,,黑暗怪兽帕阿尔,,官方「帕阿尔」，社区「帕尔」（Paarl）。
+trophy:25,Bloodborne / bronze / Defeat Great One: Amygdala.,Amygdala,阿米戈达拉,,阿米戈达拉,,
+trophy:26,Bloodborne / bronze / Defeat Martyr Logarius.,Martyr Logarius,殉道者洛加留斯,,殉道者洛加留斯,,
+trophy:27,Bloodborne / bronze / Defeat Great One: Celestial Emissary.,Celestial Emissary,天庭使者,,天庭使者,,
+trophy:28,"Bloodborne / bronze / Defeat Great One: Ebrietas, Daughter of the Cosmos.","Ebrietas, Daughter of the Cosmos",埃波利耶塔，宇宙之女,,埃波利耶塔，宇宙之女,,官方「埃波利耶塔」，社区「伊碧塔丝」（Ebrietas）。
+trophy:29,Bloodborne / bronze / Acquire a blood gem that imbues hunter weapons with special strength.,Blood Gem Contact,神血宝石新手,,神血宝石新手,,
+trophy:30,Bloodborne / bronze / Acquire a Caryll Rune that endows hunters with special strength.,Rune Contact,符文联系人,,符文联系人,,官方「符文联系人」疑为 Contact 的误译（#29 作「神血宝石新手」同样可疑），建议改「符文接触/血宝石接触」。
+trophy:31,Bloodborne / bronze / Acquire the Chalice of Pthumeru that seals the catacombs that form a web deep below Yharnam.,Chalice of Pthumeru,修梅露圣杯,,修梅露圣杯,,
+trophy:32,Bloodborne / bronze / Acquire the Chalice of Ailing Loran that seals the tragic land lost to the sands.,Chalice of Ailing Loran,贫瘠洛然圣杯,,贫瘠洛然圣杯,,
+trophy:33,Bloodborne / bronze / Acquire the Great Chalice of Isz that seals the home of the cosmic kin.,Chalice of Isz,伊兹圣杯,,伊兹圣杯,,
+trophy:34,The Old Hunters / gold / Acquire all old hunter weapons.,Old Hunter's Essence,老猎人的精华,,老猎人的精华,,官方「老猎人的精华」，与 #5「猎人的精髓」同词不同译。
+trophy:35,The Old Hunters / silver / Defeat Great One: Orphan of Kos.,Orphan of Kos,科斯孤儿,,科斯孤儿,,
+trophy:36,"The Old Hunters / bronze / Defeat the beast that was once Ludwig, the Holy Blade.","Ludwig, the Holy Blade",路德维格，神圣之剑,,路德维格，神圣之剑,,标题用「路德维格」，描述里却写「路德维希」，同一名两译，需统一。
+trophy:37,The Old Hunters / bronze / Defeat Lady Maria of the Astral Clocktower.,Lady Maria of the Astral Clocktower,精神钟塔的玛利亚修女,,精神钟塔的玛利亚修女,,官方「精神钟塔的玛利亚修女」，社区通行「星辰钟塔的玛利亚女士」（Astral Clocktower / Lady Maria）。
+trophy:38,The Old Hunters / bronze / Defeat the failed attempts to become Great Ones.,Living Failures,失败者,,失败者,,
+trophy:39,"The Old Hunters / bronze / Defeat the beast that was once Laurence, the First Vicar.","Laurence, the First Vicar",劳伦斯，第一个代理人,,劳伦斯，第一个代理人,,官方「劳伦斯，第一个代理人」，与 #15 的 Vicar 译法一致。

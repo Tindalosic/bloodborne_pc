@@ -130,6 +130,7 @@ def run_command():
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
+import bbport_trophy_text as trophy_text  # noqa: E402
 from bbport_patches import catalogue_path, describe as describe_catalogue, \
     install as install_catalogue  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
@@ -1433,7 +1434,8 @@ class Launcher:
             shown += len(items)
             head = tk.Frame(body, bg=PANEL)
             head.pack(fill='x', pady=(16, 8))
-            tk.Label(head, text=group, bg=PANEL, fg=GOLD, font=('Georgia', 13)).pack(side='left')
+            tk.Label(head, text=trophy_text.group(group, LANG), bg=PANEL, fg=GOLD,
+                     font=('Georgia', 13)).pack(side='left')
             tk.Label(head, text='{} / {}'.format(sum(1 for t in members if t[0] in unlocked), len(members)),
                      bg=PANEL, fg=MUTED, font=('Segoe UI', 9)).pack(side='left', padx=10, pady=(3, 0))
             for trophy in items:
@@ -1447,7 +1449,8 @@ class Launcher:
 
     def trophy_card(self, parent, trophy, when):
         tk = self.tk
-        _id, name, text, grade, _group = trophy
+        _id, _name, _text, grade, _group = trophy
+        name, text = trophy_text.text(trophy, LANG)
         earned = when is not None
         card = tk.Frame(parent, bg=CARD, highlightthickness=1, highlightbackground=LINE)
         card.pack(fill='x', pady=(0, 6))
@@ -1496,8 +1499,10 @@ class Launcher:
             return
         tk = self.tk
         trophy = self.toasts[0]
-        _id, name, _text, grade, _group = trophies.BY_ID.get(
+        row = trophies.BY_ID.get(
             trophy, (trophy, _('Trophy {}', 'Трофей {}').format(trophy), '', trophies.BRONZE, trophies.BASE))
+        grade = row[3]
+        name = trophy_text.text(row, LANG)[0]
         box = tk.Frame(self.content, bg=CARD, highlightthickness=1, highlightbackground=LINE, cursor='hand2')
         icon = self.trophy_icon(box, grade, True, self.px(38), CARD)
         icon.pack(side='left', padx=(12, 12), pady=10)
