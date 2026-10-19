@@ -117,6 +117,8 @@ class LauncherWindowTests(unittest.TestCase):
         self.assertIn('中文重译模组', joined)
         for pair in ('英配简中', '英配繁中', '日配简中', '日配繁中'):
             self.assertIn(pair, joined)
+        # The slot lines speak for themselves; the note explaining them is not in the window.
+        self.assertNotIn('is the version the text was translated from', joined)
         button = next(widget for widget in self.widgets(self.ttk.Button)
                       if 'Nexus Mods' in str(widget.cget('text')))
         opened = []
