@@ -208,4 +208,6 @@ ZH2 = {
     'Walk (hold)': '行走（长按）',
     'Other versions…': '其他版本…',
     'Play with': '游玩方式',
+    'System pages': '系统',
+    'Info pages': '信息',
 }
