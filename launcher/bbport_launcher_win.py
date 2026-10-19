@@ -292,8 +292,8 @@ VOICE_LANGUAGES = [('auto', ('As in the game',)), ('eng', ('English',)),
                    ('esa', ('Español (América)',)), ('ese', ('Español (España)',)),
                    ('frf', ('Français',)), ('iti', ('Italiano',)), ('jaj', ('日本語',))]
 # Bloodborne Chinese Retranslation (Nexus Mods 146) ships one variant per message folder, so the
-# slot picked above must be the folder the mod replaced.  The 配 word says which script the text
-# was translated from (English or Japanese), not which voice track plays.
+# slot picked above must be the folder the mod replaced.  The bracketed note names the script the
+# text was translated from (English or Japanese); it is not the voice track.
 RETRANSLATION_URL = 'https://www.nexusmods.com/bloodborne/mods/146?tab=files'
 RETRANSLATION_HINT = (
     'Chinese retranslation mod: pick the slot the mod replaced',
@@ -301,7 +301,6 @@ RETRANSLATION_HINT = (
     'Chinese (Traditional) — English-based Traditional Chinese (原繁中)',
     'Korean — Japanese-based Simplified Chinese (原韩语)',
     'Português (Brasil) — Japanese-based Traditional Chinese (原葡语)',
-    '配 is the version the text was translated from, not the voice track: voices are the row above.',
 )
 DRAW_PIPE = [('', ('Auto (8+ threads)', 'Авто (8+ потоков)')), ('1', ('On', 'Включён')),
              ('0', ('Off (more stable)', 'Выключен (стабильнее)'))]
