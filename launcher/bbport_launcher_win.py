@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import time
 import urllib.request
@@ -2116,11 +2117,15 @@ class Launcher:
             self.patch_vars[key] = var
             self.patch_metas[key] = meta
             author = meta.get('Author')
-            note = (meta.get('Note') or '').strip().replace('\n', ' ')
+            note = (meta.get('Note') or '').strip()
             text = key.split('/', 1)[-1] + (f'  —  {author}' if author else '')
             if note:
-                text += '\n' + (note if len(note) <= 150 else note[:147] + '…')
-            ttk.Checkbutton(self.patches_frame, text=text, variable=var, wraplength=self.px(620),
+                # ttk check buttons do not wrap, so the note is broken by hand (the same width the
+                # hints use) and shortened, or one long cheat description would widen the page.
+                if len(note) > 150:
+                    note = note[:147] + '…'
+                text += '\n' + '\n'.join(textwrap.wrap(note, 96))
+            ttk.Checkbutton(self.patches_frame, text=text, variable=var,
                             command=self.update_patch_conflicts).pack(anchor='w', pady=(3, 0))
         self.patch_conflict_label = None
         self.update_patch_conflicts()
@@ -2138,10 +2143,16 @@ class Launcher:
             self.patch_conflict_label.pack(anchor='w', pady=(8, 0))
         checked = [(key, None, meta) for key, meta in getattr(self, 'patch_metas', {}).items()
                    if self.patch_vars.get(key) and self.patch_vars[key].get()]
+        # One line per pair: two FPS presets disagree on eighty addresses, not one.
+        pairs, seen = [], set()
+        for one, other, address in conflicts(checked):
+            if (one, other) not in seen:
+                seen.add((one, other))
+                pairs.append((one, other, address))
         self.patch_conflict_label.config(text='\n'.join(
             _('{} and {} both write {:08x}: the later patch wins.',
               '{} и {} пишут в {:08x}: побеждает последний.').format(one, other, address)
-            for one, other, address in conflicts(checked)[:3]))
+            for one, other, address in pairs[:3]))
 
     def download_patches(self):
         """Replaces the bundled community list; the selections in patches.json are kept."""
