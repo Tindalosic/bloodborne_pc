@@ -750,6 +750,28 @@ class Launcher:
             self.vars[key] = v
         return self.vars[key]
 
+    def placeholder(self, entry, text):
+        """Grey prompt inside an empty entry. It must never reach settings.json."""
+        state = {'shown': False, 'text': text, 'entry': entry}
+
+        def show():
+            if not entry.get():
+                state['shown'] = True
+                entry.insert(0, text)
+                entry.configure(foreground=MUTED)
+
+        def hide(_event=None):
+            if state['shown']:
+                state['shown'] = False
+                entry.delete(0, 'end')
+                entry.configure(foreground=TEXT)
+
+        state['show'] = show
+        entry.bind('<FocusIn>', hide)
+        entry.bind('<FocusOut>', lambda _e: show())
+        show()
+        return state
+
     def choice(self, parent, key, store, options, width=38):
         """A combobox over (value, (english, russian)) pairs, kept in sync with its variable."""
         var = self.var(key, store)
@@ -1159,12 +1181,14 @@ class Launcher:
         """Where the Chinese retranslation mod goes, and a link to download it."""
         ttk = self.ttk
         holder = ttk.Frame(parent)
-        holder.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        for index, line in enumerate(RETRANSLATION_HINT):
-            ttk.Label(holder, text=_(line), style='Section.TLabel' if index == 0 else 'Muted.TLabel',
-                      wraplength=self.px(680), justify='left').pack(anchor='w', pady=(2, 0))
+        holder.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(8, 0))
+        # One label for the four slots: four separate rows pushed the rest of the page down.
+        ttk.Label(holder, text=_(RETRANSLATION_HINT[0]), style='Muted.TLabel',
+                  wraplength=self.px(680), justify='left').pack(anchor='w')
+        ttk.Label(holder, text='\n'.join(_(line) for line in RETRANSLATION_HINT[1:]),
+                  style='Muted.TLabel', wraplength=self.px(680), justify='left').pack(anchor='w', pady=(2, 0))
         ttk.Button(holder, text=_('Download the Chinese retranslation (Nexus Mods)'),
-                   command=lambda: webbrowser.open(RETRANSLATION_URL)).pack(anchor='w', pady=(8, 0))
+                   command=lambda: webbrowser.open(RETRANSLATION_URL)).pack(anchor='w', pady=(6, 0))
 
     def build_game(self):
         f = self.scrolled_page('game', _('Game & effects', 'Игра и эффекты'),
@@ -1185,9 +1209,11 @@ class Launcher:
         self.row(f, _('Text language', '\u042f\u0437\u044b\u043a \u0442\u0435\u043a\u0441\u0442\u0430'), self.choice(f, 'language', 'app', LANGUAGES))
         self.row(f, _('Voice language', '\u042f\u0437\u044b\u043a \u043e\u0437\u0432\u0443\u0447\u043a\u0438'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
                  _('As in the game uses the original voice setting; other choices use available tracks.'))
-        self.retranslation_hint(f)
-        self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
+        name = self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30)
+        self.player_placeholder = self.placeholder(name, _('PSN name'))
+        self.row(f, _('Player name (optional)', 'Имя игрока (необязательно)'), name,
                  _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
+        self.retranslation_hint(f)
         self.section(f, _('Effects', 'Эффекты'))
         self.version_warning(f)
         for key, title, _on in EFFECTS:
@@ -2310,6 +2336,9 @@ class Launcher:
 
     def collect(self):
         """Writes settings.json, bbport.ini, mods.json and patches.json."""
+        placeholder = getattr(self, 'player_placeholder', None)
+        if placeholder and placeholder['shown']:
+            self.vars['player_name'].set('')
         for key, var in self.vars.items():
             try:
                 value = var.get()

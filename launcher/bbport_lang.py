@@ -1256,6 +1256,8 @@ EXTRA_TRANSLATIONS = {
             '「与游戏相同」沿用游戏原本的语音设置；其他选项使用可用的音轨。',
         'If you use the Chinese retranslation mod, see here.':
             '如果使用中文重译模组请看这里',
+        'Player name (optional)': '玩家名称（可选）',
+        'PSN name': 'PSN 名称',
         'Chinese (Simplified) — English-based Simplified Chinese (原简中)':
             '简体中文 —— 英配简中（以英文版为底本，替换原简中）',
         'Chinese (Traditional) — English-based Traditional Chinese (原繁中)':
