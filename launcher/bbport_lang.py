@@ -1228,6 +1228,21 @@ EXTRA_TRANSLATIONS = {
         'Chinese (Traditional)': '繁體中文',
         'Korean': '한국어',
         'Text language': '游戏文本语言',
+        'Voice language': '语音语言',
+        'As in the game uses the original voice setting; other choices use available tracks.':
+            '「与游戏相同」沿用游戏原本的语音设置；其他选项使用可用的音轨。',
+        'Chinese retranslation mod: pick the slot the mod replaced': '中文重译模组：请选择它替换掉的语言槽位',
+        'Chinese (Simplified) — English-based Simplified Chinese (原简中)':
+            '简体中文 —— 英配简中（以英文版为底本，替换原简中）',
+        'Chinese (Traditional) — English-based Traditional Chinese (原繁中)':
+            '繁體中文 —— 英配繁中（以英文版为底本，替换原繁中）',
+        'Korean — Japanese-based Simplified Chinese (原韩语)':
+            '한국어 —— 日配简中（以日文版为底本，替换原韩语）',
+        'Português (Brasil) — Japanese-based Traditional Chinese (原葡语)':
+            '葡萄牙语（巴西）—— 日配繁中（以日文版为底本，替换原葡语）',
+        '配 is the version the text was translated from, not the voice track: voices are the row above.':
+            '「配」指译文所依据的版本（英/日文剧本），不是配音；配音由上面那一行单独选择。',
+        'Download the Chinese retranslation (Nexus Mods)': '下载中文重译模组（Nexus Mods）',
     },
     'ja': {
         'Chinese (Simplified)': '簡体字中国語',

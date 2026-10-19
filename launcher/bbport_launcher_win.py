@@ -288,6 +288,18 @@ VOICE_LANGUAGES = [('auto', ('As in the game',)), ('eng', ('English',)),
                    ('ptb', ('Português (Brasil)',)), ('ded', ('Deutsch',)),
                    ('esa', ('Español (América)',)), ('ese', ('Español (España)',)),
                    ('frf', ('Français',)), ('iti', ('Italiano',)), ('jaj', ('日本語',))]
+# Bloodborne Chinese Retranslation (Nexus Mods 146) ships one variant per message folder, so the
+# slot picked above must be the folder the mod replaced.  The 配 word says which script the text
+# was translated from (English or Japanese), not which voice track plays.
+RETRANSLATION_URL = 'https://www.nexusmods.com/bloodborne/mods/146?tab=files'
+RETRANSLATION_HINT = (
+    'Chinese retranslation mod: pick the slot the mod replaced',
+    'Chinese (Simplified) — English-based Simplified Chinese (原简中)',
+    'Chinese (Traditional) — English-based Traditional Chinese (原繁中)',
+    'Korean — Japanese-based Simplified Chinese (原韩语)',
+    'Português (Brasil) — Japanese-based Traditional Chinese (原葡语)',
+    '配 is the version the text was translated from, not the voice track: voices are the row above.',
+)
 DRAW_PIPE = [('', ('Auto (8+ threads)', 'Авто (8+ потоков)')), ('1', ('On', 'Включён')),
              ('0', ('Off (more stable)', 'Выключен (стабильнее)'))]
 READBACKS = [('', ('Relaxed (default)', 'Relaxed (по умолчанию)')), ('0', ('Off', 'Выключены')),
@@ -1089,6 +1101,17 @@ class Launcher:
                    _('When HDR is on in Windows and the display supports it.',
                      'Если HDR включён в Windows и монитор его поддерживает.'))
 
+    def retranslation_hint(self, parent):
+        """Where the Chinese retranslation mod goes, and a link to download it."""
+        ttk = self.ttk
+        holder = ttk.Frame(parent)
+        holder.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(10, 0))
+        for index, line in enumerate(RETRANSLATION_HINT):
+            ttk.Label(holder, text=_(line), style='Section.TLabel' if index == 0 else 'Muted.TLabel',
+                      wraplength=self.px(680), justify='left').pack(anchor='w', pady=(2, 0))
+        ttk.Button(holder, text=_('Download the Chinese retranslation (Nexus Mods)'),
+                   command=lambda: webbrowser.open(RETRANSLATION_URL)).pack(anchor='w', pady=(8, 0))
+
     def build_game(self):
         f = self.scrolled_page('game', _('Game & effects', 'Игра и эффекты'),
                                _('Your game dump, saves and the game patches.', 'Дамп игры, сохранения и патчи игры.'))
@@ -1108,6 +1131,7 @@ class Launcher:
         self.row(f, _('Text language', '\u042f\u0437\u044b\u043a \u0442\u0435\u043a\u0441\u0442\u0430'), self.choice(f, 'language', 'app', LANGUAGES))
         self.row(f, _('Voice language', '\u042f\u0437\u044b\u043a \u043e\u0437\u0432\u0443\u0447\u043a\u0438'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
                  _('As in the game uses the original voice setting; other choices use available tracks.'))
+        self.retranslation_hint(f)
         self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
                  _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
         self.section(f, _('Effects', 'Эффекты'))

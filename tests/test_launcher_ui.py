@@ -109,5 +109,24 @@ class LauncherWindowTests(unittest.TestCase):
                         'the achievement page did not use the Chinese names')
 
 
+    def test_retranslation_hint_and_the_download_button(self):
+        # The hint ties the language choice to the retranslation mod's slots, so the pairs must be
+        # in the window and the button must open the mod page without a network round trip here.
+        texts = [str(widget.cget('text')) for widget in self.widgets() if 'text' in widget.keys()]
+        joined = '\n'.join(texts)
+        self.assertIn('中文重译模组', joined)
+        for pair in ('英配简中', '英配繁中', '日配简中', '日配繁中'):
+            self.assertIn(pair, joined)
+        button = next(widget for widget in self.widgets(self.ttk.Button)
+                      if 'Nexus Mods' in str(widget.cget('text')))
+        opened = []
+        original = self.launcher.webbrowser.open
+        self.launcher.webbrowser.open = lambda url, *args, **kwargs: opened.append(url)
+        try:
+            button.invoke()
+        finally:
+            self.launcher.webbrowser.open = original
+        self.assertEqual(opened, [self.launcher.RETRANSLATION_URL])
+
 if __name__ == '__main__':
     unittest.main()
