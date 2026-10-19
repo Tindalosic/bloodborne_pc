@@ -1247,18 +1247,21 @@ EXTRA_TRANSLATIONS = {
         'Turkish': '土耳其语',
         'Chinese (Simplified)': '简体中文',
         'Chinese (Traditional)': '繁體中文',
-        'Korean': '한국어',
+        'Korean': '韩语',
+        'Português (Portugal)': '葡萄牙语（葡萄牙）',
+        'Português (Brasil)': '葡萄牙语（巴西）',
         'Text language': '游戏文本语言',
         'Voice language': '语音语言',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '「与游戏相同」沿用游戏原本的语音设置；其他选项使用可用的音轨。',
-        'Chinese retranslation mod: pick the slot the mod replaced': '中文重译模组：请选择它替换掉的语言槽位',
+        'If you use the Chinese retranslation mod, choose its slot below.':
+            '如果使用中文重译模组，请按下方对应槽位选择语言。',
         'Chinese (Simplified) — English-based Simplified Chinese (原简中)':
             '简体中文 —— 英配简中（以英文版为底本，替换原简中）',
         'Chinese (Traditional) — English-based Traditional Chinese (原繁中)':
             '繁體中文 —— 英配繁中（以英文版为底本，替换原繁中）',
         'Korean — Japanese-based Simplified Chinese (原韩语)':
-            '한국어 —— 日配简中（以日文版为底本，替换原韩语）',
+            '韩语 —— 日配简中（以日文版为底本，替换原韩语）',
         'Português (Brasil) — Japanese-based Traditional Chinese (原葡语)':
             '葡萄牙语（巴西）—— 日配繁中（以日文版为底本，替换原葡语）',
         '配 is the version the text was translated from, not the voice track: voices are the row above.':

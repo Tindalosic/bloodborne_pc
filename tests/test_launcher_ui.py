@@ -71,7 +71,8 @@ class LauncherWindowTests(unittest.TestCase):
         lists = [values for values in choices if len(values) == len(self.launcher.LANGUAGES)]
         self.assertEqual(len(lists), 1, f'expected one text language list, got {len(lists)}')
         names = lists[0]
-        for expected in ('简体中文', '繁體中文', '한국어'):
+        # Names are in the interface language, so Korean reads 韩语 rather than 한국어.
+        for expected in ('简体中文', '繁體中文', '韩语'):
             self.assertIn(expected, names)
         self.assertEqual(len(set(names)), len(names), 'a language appears twice')
 

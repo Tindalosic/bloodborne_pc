@@ -296,7 +296,7 @@ VOICE_LANGUAGES = [('auto', ('As in the game',)), ('eng', ('English',)),
 # text was translated from (English or Japanese); it is not the voice track.
 RETRANSLATION_URL = 'https://www.nexusmods.com/bloodborne/mods/146?tab=files'
 RETRANSLATION_HINT = (
-    'Chinese retranslation mod: pick the slot the mod replaced',
+    'If you use the Chinese retranslation mod, choose its slot below.',
     'Chinese (Simplified) — English-based Simplified Chinese (原简中)',
     'Chinese (Traditional) — English-based Traditional Chinese (原繁中)',
     'Korean — Japanese-based Simplified Chinese (原韩语)',
