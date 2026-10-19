@@ -46,6 +46,9 @@ class LauncherWindowTests(unittest.TestCase):
         cls.tk, cls.ttk = tk, ttk
         launcher.LANG = 'zh'  # main() would set this from the settings file
         cls.app = launcher.Launcher(cls.root, tk, ttk, filedialog, messagebox)
+        # Pages build on first visit; these tests scan the whole window, so build them all.
+        for name in cls.app.builders:
+            cls.app.ensure_page(name)
         cls.app.refresh_lists()
         cls.root.update()
 

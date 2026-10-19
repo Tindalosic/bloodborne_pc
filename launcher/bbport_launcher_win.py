@@ -638,12 +638,24 @@ class Launcher:
         root.protocol('WM_DELETE_WINDOW', self.close)
         root.after(100, self.drain_output)
         root.after(300, self.poll_trophies)
+        root.after(2000, self.warm_trophies)
         threading.Thread(target=self.detect_gpu, daemon=True).start()
         if self.app.get('check_updates', True) and not COOP_TEST:
             threading.Thread(target=self.check_update, daemon=True).start()
 
     def px(self, size):
         return int(size * self.dpi)
+
+    def warm_trophies(self):
+        """The first trophy build costs about a second: 40 cards of wrapped labels, and Tk
+        measures every font for the first time. Paying it while the window idles keeps the
+        Achievements page instant on the first visit."""
+        if getattr(self, 'trophy_state', None) is None:
+            try:
+                self.ensure_page('trophies')
+                self.render_trophies()
+            except self.tk.TclError:
+                pass
 
     def set_icon(self):
         try:
@@ -888,6 +900,7 @@ class Launcher:
         rule.pack(fill='x', pady=(13, 0))
         gold_rule = tk.Frame(head, bg=GOLD, height=1, width=self.px(46))
         gold_rule.place(in_=rule, x=0, y=0, relheight=1.0)
+        outer.gold_rule = gold_rule
         canvas = tk.Canvas(outer, bg=PANEL, highlightthickness=0, bd=0)
         bar = ttk.Scrollbar(outer, orient='vertical', command=canvas.yview)
         inner = ttk.Frame(canvas, padding=(28, 0, 28, 24))
@@ -1001,18 +1014,15 @@ class Launcher:
         self.content.pack(fill='both', expand=True)
 
         self.pages = {}
-        self.build_play()
-        self.build_graphics()
-        self.build_display()
-        self.build_game()
-        self.build_cheats()
-        self.build_online()
-        self.build_mods()
-        self.build_trophies()
-        self.build_controls()
-        self.build_advanced()
-        self.build_about()
-        self.build_log()
+        # Pages are built on first visit: all twelve cost ~350 ms at startup and a typical
+        # session opens two or three of them.
+        self.builders = {'play': self.build_play, 'graphics': self.build_graphics,
+                         'display': self.build_display, 'game': self.build_game,
+                         'cheats': self.build_cheats, 'online': self.build_online,
+                         'mods': self.build_mods, 'trophies': self.build_trophies,
+                         'controls': self.build_controls, 'advanced': self.build_advanced,
+                         'about': self.build_about, 'log': self.build_log}
+        self.ensure_page('play')
         self.root.bind_all('<MouseWheel>', self.wheel)
         self.refresh_status()
 
@@ -1102,49 +1112,35 @@ class Launcher:
 
         self.animate('hover', 6, apply)
 
-    def fade(self, then):
-        """Dim the content, swap the page underneath, and let it come back."""
-        if not self.motion():
-            then()
+    def reveal(self, page):
+        """The gold rule under the heading draws itself in. One frame per label, not a veil:
+        a stippled full-window curtain costs 300-2000 ms per page here."""
+        rule = getattr(page, 'gold_rule', None)
+        if rule is None or not self.motion():
             return
-        tk = self.tk
-        veil = tk.Canvas(self.content, bg=PANEL, highlightthickness=0, bd=0)
-        veil.place(x=0, y=0, relwidth=1.0, relheight=1.0)
-        rect = veil.create_rectangle(0, 0, 4000, 4000, fill=BG, outline='', stipple='gray12')
-        ramp = ('gray12', 'gray25', 'gray50', 'gray75', 'gray75')
-        self.cancel_animation('fade')
+        width, height = self.px(46), 1
 
-        def darken(index=0):
-            if index < len(ramp):
-                try:
-                    veil.itemconfigure(rect, stipple=ramp[index])
-                except tk.TclError:
-                    return
-                self.animations['fade'] = self.root.after(14, lambda: darken(index + 1))
-            else:
-                then()
-                lighten(len(ramp) - 1)
+        def apply(t):
+            rule.place_configure(width=max(self.px(8), round(width * t)))
 
-        def lighten(index):
-            if index >= 0:
-                try:
-                    veil.itemconfigure(rect, stipple=ramp[index])
-                except tk.TclError:
-                    return
-                self.animations['fade'] = self.root.after(14, lambda: lighten(index - 1))
-            else:
-                self.animations.pop('fade', None)
-                veil.destroy()
-
-        darken()
+        self.animate('reveal', 6, apply)
 
     def show(self, name):
-        if self.motion() and self.current_page and self.current_page != name:
-            self.fade(lambda: self.open_page(name))
-        else:
-            self.open_page(name)
+        if self.current_page == name:
+            return
+        self.open_page(name)
+        page = self.pages.get(name)
+        if page is not None:
+            self.reveal(page)
+
+    def ensure_page(self, name):
+        """Build a page the first time it is opened."""
+        if name in self.pages or name not in self.builders:
+            return
+        self.builders[name]()
 
     def open_page(self, name):
+        self.ensure_page(name)
         for page in self.pages.values():
             page.pack_forget()
         self.pages[name].pack(fill='both', expand=True)
@@ -1820,19 +1816,19 @@ class Launcher:
         earned = when is not None
         card = tk.Frame(parent, bg=CARD, highlightthickness=1, highlightbackground=LINE)
         card.pack(fill='x', pady=(0, 6))
-        self.trophy_icon(card, grade, earned, self.px(46), CARD).pack(side='left', padx=(12, 14), pady=10)
-        side = tk.Frame(card, bg=CARD)
-        side.pack(side='right', padx=(12, 18))
-        tk.Label(side, text=_(*GRADE_NAMES[grade]), bg=CARD, fg=TROPHY_COLORS[grade] if earned else MUTED,
-                 font=('Segoe UI', 9, 'bold')).pack(anchor='e')
-        tk.Label(side, text=time.strftime('%d %b %Y', time.localtime(when)) if earned else _('Locked', 'Не получен'),
-                 bg=CARD, fg=MUTED, font=('Segoe UI', 9)).pack(anchor='e', pady=(2, 0))
+        # A painted photo, not a Canvas per card: 40 canvases cost ~160 ms per rebuild.
+        tk.Label(card, image=bbport_theme.cup(self.tk, self.px(22), TROPHY_COLORS[grade] if earned else TROPHY_LOCKED,
+                                              CARD), bg=CARD).pack(side='left', padx=(14, 14), pady=12)
         middle = tk.Frame(card, bg=CARD)
         middle.pack(side='left', fill='x', expand=True, pady=10)
         tk.Label(middle, text=name, bg=CARD, fg=TEXT if earned else MUTED,
                  font=('Segoe UI', 11, 'bold' if earned else 'normal')).pack(anchor='w')
         tk.Label(middle, text=text, bg=CARD, fg=MUTED, font=('Segoe UI', 9), justify='left',
-                 wraplength=self.px(520)).pack(anchor='w', pady=(1, 0))
+                 wraplength=self.px(560)).pack(anchor='w', pady=(1, 0))
+        state = time.strftime('%d %b %Y', time.localtime(when)) if earned else _('Locked', 'Не получен')
+        tk.Label(card, text=_(*GRADE_NAMES[grade]) + '   ' + state, bg=CARD,
+                 fg=TROPHY_COLORS[grade] if earned else MUTED,
+                 font=('Segoe UI', 9)).pack(side='right', padx=(12, 16))
 
     def set_trophy_filter(self, name):
         self.trophy_filter = name
@@ -2461,9 +2457,26 @@ class Launcher:
             self.ui_calls.put(done)
         threading.Thread(target=work, daemon=True).start()
 
-    def refresh_lists(self):
+    def list_signature(self):
+        """What refresh_lists() depends on. Rebuilding 84 patch rows on every visit cost ~0.3 s."""
+        patches = Path(self.var('patches_dir', 'app').get() or DATA_DIR / 'patches')
+        mods = Path(self.var('mods_dir', 'app').get() or DATA_DIR / 'mods')
+        parts = []
+        for folder in (patches, mods):
+            try:
+                parts.append((str(folder), tuple(sorted(
+                    (p.name, p.stat().st_mtime_ns) for p in folder.iterdir()))))
+            except OSError:
+                parts.append((str(folder), ()))
+        return tuple(parts)
+
+    def refresh_lists(self, force=False):
         if not hasattr(self, 'patches_frame'):
             return
+        signature = self.list_signature()
+        if not force and signature == getattr(self, 'lists_signature', None) and self.patch_vars:
+            return
+        self.lists_signature = signature
         tk, ttk = self.tk, self.ttk
         from mods import discover, unrecognized
         from patches import external_patches

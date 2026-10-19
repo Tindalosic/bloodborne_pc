@@ -234,3 +234,32 @@ def draw_glyph(canvas, name, x, y, size, colour, width=1):
                                         x + s * 0.80, y + s * 0.80,
                                         outline=colour, width=width))
     return items
+
+_CUPS = {}
+
+
+def cup(tk, size, colour, background):
+    """A trophy cup painted into a PhotoImage, cached per size and colour.
+
+    A Canvas per card looked right but cost ~4 ms a card: 40 cards is a 160 ms
+    hitch on a page switch. A photo is one label.
+    """
+    key = (size, colour, background)
+    cached = _CUPS.get(key)
+    if cached is not None:
+        return cached
+    image = tk.PhotoImage(width=size, height=size)
+    s = size
+    for y in range(s):
+        fy = y / s
+        row = []
+        for x in range(s):
+            dx = abs(x + 0.5 - s / 2)
+            bowl = 0.10 <= fy <= 0.50 and dx <= s * (0.40 - 0.16 * min(1.0, (fy - 0.10) / 0.40))
+            stem = 0.50 < fy <= 0.62 and dx <= s * 0.07
+            base = 0.62 < fy <= 0.72 and dx <= s * 0.22
+            handle = 0.16 <= fy <= 0.40 and s * 0.34 <= dx <= s * 0.45
+            row.append(colour if (bowl or stem or base or handle) else background)
+        image.put('{' + ' '.join(row) + '}', to=(0, y))
+    _CUPS[key] = image
+    return image
