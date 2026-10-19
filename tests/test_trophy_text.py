@@ -46,7 +46,8 @@ class TrophyTextTests(unittest.TestCase):
     def test_coverage(self):
         self.assertEqual(trophy_text.coverage('zh'), (len(trophies.TROPHIES), len(trophies.TROPHIES)))
         self.assertEqual(trophy_text.coverage('de'), (0, len(trophies.TROPHIES)))
-        self.assertEqual(trophy_text.LANGUAGES, ('zh',))
+        # Traditional Chinese is generated from the Simplified table, so both are complete.
+        self.assertEqual(trophy_text.LANGUAGES, ('zh', 'zh-hant'))
 
 
 if __name__ == '__main__':

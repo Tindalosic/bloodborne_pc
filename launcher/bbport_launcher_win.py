@@ -1814,7 +1814,7 @@ class Launcher:
             marked = conflicts.get(o, {})
             for i, btn in enumerate(buttons):
                 key = values[i] if i < len(values) else None
-                text = ' + '.join(display_name(p, russian) for p in binding_parts(key)) if key else '—'
+                text = ' + '.join(display_name(p, russian, _) for p in binding_parts(key)) if key else '—'
                 btn.configure(text=text + ('  ⚠' if i in marked else ''), style='Slot.TButton')
             others = sorted({b for slot in marked.values() for b in slot})
             warn.configure(text='⚠ ' + _('also {}', 'также {}').format(
@@ -1907,7 +1907,7 @@ class Launcher:
             if name in MODIFIER_NAMES:
                 if name not in modifiers and len(modifiers) < MAX_COMBO - 1:
                     modifiers.append(name)
-                    key_label.configure(text=' + '.join(display_name(m, LANG == 'ru') for m in modifiers) + ' + …')
+                    key_label.configure(text=' + '.join(display_name(m, LANG == 'ru', _) for m in modifiers) + ' + …')
                 return  # wait: another input makes a combination, a release binds it alone
             apply(name)
 

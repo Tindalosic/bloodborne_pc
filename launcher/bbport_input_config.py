@@ -138,12 +138,15 @@ DISPLAY_NAMES = {
 }
 
 
-def display_name(part, russian=False):
-    """'lshift' -> 'Shift', 'leftbutton' -> 'Left click', 'e' -> 'E'."""
+def display_name(part, russian=False, translate=None):
+    """'lshift' -> 'Shift', 'leftbutton' -> 'Left click', 'e' -> 'E'.
+
+    translate() localises the label when the caller has a table for its UI language.
+    """
     name = DISPLAY_NAMES.get(part, part.upper())
     if isinstance(name, tuple):
-        return name[1] if russian else name[0]
-    return name
+        name = name[1] if russian else name[0]
+    return translate(name) if translate else name
 
 
 def binding_parts(value):

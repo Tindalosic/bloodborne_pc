@@ -54,3 +54,18 @@ they live in `launcher/bbport_trophy_text.py` as `TEXT[language][trophy id] = (n
 Simplified Chinese covers all 40 trophies (names as the PS4 release shows them, descriptions from
 the official Chinese release). A language that is missing, or that has not translated a given
 trophy, falls back to English per trophy — there is no all-or-nothing requirement.
+
+## Traditional Chinese is generated
+
+`zh-hant` is not maintained by hand: it is the Simplified table converted with OpenCC's `s2twp`
+phrase table (Taiwan wording) plus a small override list, written to `launcher/bbport_lang_hant.py`
+and `launcher/bbport_trophy_text_hant.py`. After editing any Simplified text:
+
+```sh
+python scripts/generate_hant.py           # rewrite both generated files
+python scripts/generate_hant.py --check   # CI-style check that they are not stale
+```
+
+OpenCC is a build-time dependency only (`pip install opencc`); the launcher reads the generated
+dictionaries, so players never need it. Editing `bbport_lang_hant.py` by hand is pointless — the
+next generation overwrites it.

@@ -1206,13 +1206,14 @@ TRANSLATIONS = {
 LANGUAGE_NAMES = [('', ('System', 'Как в системе')), ('en', ('English',)), ('ru', ('Русский',)),
                   ('ar', ('العربية',)), ('es', ('Español',)), ('pt', ('Português (Brasil)',)),
                   ('fr', ('Français',)), ('de', ('Deutsch',)), ('it', ('Italiano',)),
-                  ('pl', ('Polski',)), ('tr', ('Türkçe',)), ('zh', ('简体中文',)), ('ja', ('日本語',)),
-                  ('ko', ('한국어',))]
+                  ('pl', ('Polski',)), ('tr', ('Türkçe',)), ('zh', ('简体中文',)),
+                  ('zh-hant', ('繁體中文',)), ('ja', ('日本語',)), ('ko', ('한국어',))]
 # Windows primary language ids (GetUserDefaultUILanguage() & 0x3ff) -> launcher language.
 WINDOWS_LANGUAGES = {0x19: 'ru', 0x01: 'ar', 0x0a: 'es', 0x16: 'pt', 0x0c: 'fr', 0x07: 'de', 0x10: 'it',
                      0x15: 'pl', 0x1f: 'tr', 0x04: 'zh', 0x11: 'ja', 0x12: 'ko'}
 
 from bbport_lang_more import MORE, MORE_KEYS  # noqa: E402 (texts added later, Russian included)
+from bbport_lang_zh2 import ZH2  # noqa: E402 (Chinese for labels built outside KEYS)
 import bbport_locale  # noqa: E402 (locale packs laid over the built-in texts)
 
 EXTRA_TRANSLATIONS = {
@@ -1302,6 +1303,15 @@ EXTRA_TRANSLATIONS = {
         'Text language': '텍스트 언어',
     },
 }
+
+EXTRA_TRANSLATIONS.setdefault('zh', {}).update(ZH2)
+
+try:  # scripts/generate_hant.py rewrites this file from the Chinese table
+    from bbport_lang_hant import TEXT as _HANT
+except ImportError:  # first checkout: run the generator to add Traditional Chinese
+    _HANT = {}
+if _HANT:
+    EXTRA_TRANSLATIONS['zh-hant'] = _HANT
 
 _tables = {}
 

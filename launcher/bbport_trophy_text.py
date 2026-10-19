@@ -68,6 +68,22 @@ GROUP_NAMES = {
     },
 }
 
+# The Traditional table is generated from the Simplified one (scripts/generate_hant.py), so the two
+# never drift apart; when the generated file is missing, zh-hant simply falls back to English.
+try:
+    import bbport_trophy_text_hant as _hant
+except ImportError:  # pragma: no cover - the generated file ships with the launcher
+    _hant = None
+else:
+    TEXT['zh-hant'] = _hant.TEXT
+    GROUP_NAMES['zh-hant'] = _hant.GROUP_NAMES
+    LANGUAGES = LANGUAGES + ('zh-hant',)
+
+
+def _table(language):
+    """The rows for one language, treating `zh-hant` as Traditional Chinese, not as unknown."""
+    return TEXT.get(language) or {}
+
 
 def text(trophy, language):
     """(name, description) for one trophy row, in the requested language when it has one."""

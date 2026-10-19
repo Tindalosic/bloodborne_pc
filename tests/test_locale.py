@@ -83,5 +83,36 @@ class ShippedTranslationsTest(unittest.TestCase):
         self.assertEqual(trophy_text.text(trophies.BY_ID[1], 'ru'), (trophies.BY_ID[1][1], trophies.BY_ID[1][2]))
 
 
+class TraditionalChineseTest(unittest.TestCase):
+    """`zh-hant` is generated from the Simplified table, so it must cover exactly the same keys."""
+
+    def test_traditional_covers_the_simplified_keys(self):
+        import bbport_lang
+        simplified = bbport_lang.table('zh')
+        traditional = bbport_lang.table('zh-hant')
+        self.assertGreater(len(traditional), 300)
+        missing = [key for key, text in simplified.items() if isinstance(text, str) and text and key not in traditional]
+        self.assertEqual(missing, [])
+
+    def test_traditional_uses_traditional_characters(self):
+        import bbport_lang
+        table = bbport_lang.table('zh-hant')
+        self.assertEqual(table['Text language'], '遊戲文字語言')
+        self.assertEqual(table['Mouse look'], '滑鼠視角')
+        # Simplified-only forms must not survive the conversion.
+        for text in table.values():
+            if isinstance(text, str):
+                self.assertNotIn('鼠标', text)
+                self.assertNotIn('游戏', text)
+
+    def test_trophy_texts_are_traditional_too(self):
+        import bbport_trophies as trophies
+        import bbport_trophy_text as trophy_text
+        self.assertIn('zh-hant', trophy_text.LANGUAGES)
+        self.assertEqual(trophy_text.text(trophies.BY_ID[1], 'zh-hant')[0], '亞南日出')
+        self.assertEqual(trophy_text.coverage('zh-hant'), (len(trophies.TROPHIES), len(trophies.TROPHIES)))
+        self.assertEqual(trophy_text.group(trophies.DLC, 'zh-hant'), '老獵人')
+
+
 if __name__ == '__main__':
     unittest.main()
