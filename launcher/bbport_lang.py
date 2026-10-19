@@ -1213,6 +1213,7 @@ WINDOWS_LANGUAGES = {0x19: 'ru', 0x01: 'ar', 0x0a: 'es', 0x16: 'pt', 0x0c: 'fr',
                      0x15: 'pl', 0x1f: 'tr', 0x04: 'zh', 0x11: 'ja', 0x12: 'ko'}
 
 from bbport_lang_more import MORE, MORE_KEYS  # noqa: E402 (texts added later, Russian included)
+import bbport_locale  # noqa: E402 (locale packs laid over the built-in texts)
 
 EXTRA_TRANSLATIONS = {
     'pt': {
@@ -1257,4 +1258,6 @@ def table(language):
         _tables[language] = {**(dict(zip(KEYS, texts)) if texts else {}),
                              **(dict(zip(MORE_KEYS, more)) if more else {}),
                              **EXTRA_TRANSLATIONS.get(language, {})}
+        # locale/<language>.json next to the launcher overrides the texts above.
+        _tables[language] = bbport_locale.merge(language, _tables[language])
     return _tables[language]
