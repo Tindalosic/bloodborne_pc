@@ -121,6 +121,23 @@ void runtime_file_configure(const char *app0,const char *user) {
         runtime_file_mount(guest,path);
     }
 }
+/* The /msg and /menu folder holding the text of a PS4 system language id, or NULL for one with
+ * no text on the disc. The ids are the SCE_SYSTEM_PARAM_LANG values (src/runtime_services.c
+ * hands the same id to the game), and the folder names are the ones in dvdroot_ps4/msg. */
+static const char *message_folder(void) {
+    static const struct { int id; const char *code; } folders[]={
+        {0,"jpnjp"},  {1,"engus"}, {2,"frafr"}, {3,"spaes"}, {4,"deude"}, {5,"itait"},
+        {6,"nldnl"},  {7,"porpt"}, {8,"rusru"}, {9,"korkr"}, {10,"zhotw"}, {11,"zhocn"},
+        {12,"finfi"}, {13,"swese"},{14,"dandk"},{15,"norno"},{16,"polpl"},{17,"porbr"},
+        {18,"enggb"}, {19,"turtr"},{20,"spaar"},
+    };
+    const char *language=getenv("BB_LANGUAGE");
+    if (!language || !*language) return NULL;
+    int id=atoi(language);
+    for (size_t i=0;i<sizeof(folders)/sizeof(folders[0]);++i)
+        if (folders[i].id==id) return folders[i].code;
+    return NULL;
+}
 /* Resolve a guest path to a host path; returns 0 or a host errno. */
 static int translate(const char *guest,char *out,size_t size) {
     if (!guest || !*guest) return ENOENT;
@@ -140,21 +157,31 @@ static int translate(const char *guest,char *out,size_t size) {
     else if ((size_t)snprintf(out,size,"%s%s",m->host,buffer+best)>=size) result=ENAMETOOLONG;
     pthread_mutex_unlock(&lock);
     if (!result && strstr(out,"/dvdroot_ps4/")) {
-        const char *language=getenv("BB_LANGUAGE");
-        if (language && !strcmp(language,"17")) {
-            /* Some game paths use the Portuguese or English fallback directory. */
-            const char *folders[]={"/msg/porpt/","/menu/porpt/","/msg/engus/","/menu/engus/"};
-            for (size_t i=0;i<sizeof(folders)/sizeof(folders[0]);++i) {
-                char *segment=strstr(out,folders[i]);
-                if (!segment) continue;
-                char *folder=segment+strlen(folders[i])-6;
-                char original[5];
-                memcpy(original,folder,5);
-                memcpy(folder,"porbr",5);
+        /* The disc folds several languages into one folder, or leaves a folder out, so the
+           requested /msg/ or /menu/ folder is rewritten to the one holding the chosen text.
+           The game still assembles the path itself from the PS4 language id it is given. */
+        const char *code=message_folder();
+        const char *folders[]={"/msg/porpt/","/menu/porpt/","/msg/engus/","/menu/engus/"};
+        if (code) for (size_t i=0;i<sizeof(folders)/sizeof(folders[0]);++i) {
+            char *segment=strstr(out,folders[i]);
+            if (!segment) continue;
+            char *folder=segment+strlen(folders[i])-6;
+            char original[5];
+            memcpy(original,folder,5);
+            /* Never rewrite a folder that already matches: English must stay English. */
+            if (strncmp(folder,code,5)) {
+                memcpy(folder,code,5);
                 HostStat file;
-                if (host_stat(out,&file)) memcpy(folder,original,5);
-                break;
+                if (host_stat(out,&file)) {
+                    memcpy(folder,original,5);
+                    /* The chosen folder may miss this file: English is the fallback text. */
+                    if (strcmp(code,"engus") && strncmp(original,"engus",5)) {
+                        memcpy(folder,"engus",5);
+                        if (host_stat(out,&file)) memcpy(folder,original,5);
+                    }
+                }
             }
+            break;
         }
         /* Voice tracks are independent of the game's text language. */
         const char *voice=getenv("BB_VOICE_LANGUAGE");

@@ -11,6 +11,16 @@ MINGW*|MSYS*)
     for tool in clang cmake ninja pkg-config; do
         command -v "$tool" >/dev/null || { echo "Need $tool from MSYS2 CLANG64 (packaging/windows/README.md)." >&2; exit 1; }
     done
+    # --test: the host-side tests need neither the GPU library nor the Vulkan loader, so skip
+    # the submodule downloads and the CMake/Ninja build that would otherwise gate them.
+    if [[ ${1:-} == --test ]]; then
+        for test in test_language_files test_content; do
+            "$CC" -std=c11 -O2 -g -Wall -Wextra -Werror -pthread -I. -Isrc "tests/$test.c" \
+                src/runtime_content.c -lbcrypt -o "out/${test//_/-}.exe"
+            "out/${test//_/-}.exe"
+        done
+        exit 0
+    fi
     if [[ ! -f gpu/third_party/fsr-vulkan/CMakeLists.txt || ! -f gpu/third_party/imgui/imgui.h ||
           ! -f gpu/third_party/xbyak/xbyak/xbyak.h ]]; then
         git submodule update --init --recursive
@@ -104,4 +114,6 @@ if [[ ${1:-} == --test ]]; then
     out/sema-test
     "$CC" -std=c11 -D_GNU_SOURCE -O2 -g -Wall -Wextra -Werror -I. -Isrc tests/test_content.c src/runtime_content.c -o out/content-test
     out/content-test
+    "$CC" -std=c11 -O2 -g -Wall -Wextra -Werror -pthread -I. -Isrc tests/test_language_files.c -o out/language-files-test
+    out/language-files-test
 fi

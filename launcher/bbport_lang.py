@@ -1221,6 +1221,25 @@ EXTRA_TRANSLATIONS = {
         'As in the game uses the original voice setting; other choices use available tracks.':
             'Como no jogo usa a voz original; as outras opções usam as faixas disponíveis.',
     },
+    # Game language names (LANGUAGES in bbport_launcher_win.py).
+    'zh': {
+        'Chinese (Simplified)': '简体中文',
+        'Chinese (Traditional)': '繁體中文',
+        'Korean': '한국어',
+        'Text language': '游戏文本语言',
+    },
+    'ja': {
+        'Chinese (Simplified)': '簡体字中国語',
+        'Chinese (Traditional)': '繁体字中国語',
+        'Korean': '韓国語',
+        'Text language': 'テキストの言語',
+    },
+    'ko': {
+        'Chinese (Simplified)': '중국어 간체',
+        'Chinese (Traditional)': '중국어 번체',
+        'Korean': '한국어',
+        'Text language': '텍스트 언어',
+    },
 }
 
 _tables = {}

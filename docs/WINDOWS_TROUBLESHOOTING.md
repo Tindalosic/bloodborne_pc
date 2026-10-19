@@ -64,9 +64,16 @@ icons follow. Two things that do not work for this:
 - The PS4 system setting for the confirm button (`sceSystemServiceParamGetInt` 1000): the game
   asks for it but takes the layout from its region instead.
 
-## Korean text
+## Chinese and Korean text
 
-The game language list has no Korean. With the language left on English, the
-[Enhanced + Vanilla Plus Korean translation](https://github.com/kairess/bb-enhanced-vanillaplus-korean)
-mod (a Korean font and Korean `engus`/`enggb` message files) shows the game in Korean; put it
-in `mods\` below any mods it translates. The *Unlock Game Region* patch is not needed for it.
+The disc ships the message folders but its own language list only offers the eight western
+and Japanese entries, so **Game & effects → Text language** gained the Asian ones: *Chinese
+(Simplified)*, *Chinese (Traditional)* and *Korean*. They resolve to the game's own
+`msg/zhocn`, `msg/zhotw` and `msg/korkr` folders, and to `msg/engus` for any file those
+folders do not have. The *Unlock Game Region* patch is not needed for them.
+
+A mod that replaces message files still works: the folders above are looked up first, so a mod
+writing `zhocn`/`korkr` files (or the
+[Enhanced + Vanilla Plus Korean translation](https://github.com/kairess/bb-enhanced-vanillaplus-korean),
+which writes Korean into `engus`) is picked up by the language it targets. Leave the language
+on English to use mods that replace the English folders.

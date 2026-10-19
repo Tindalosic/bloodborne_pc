@@ -265,9 +265,21 @@ FPS_MODES = [('uncap', ('Unlocked (frame-time patch)', 'Без ограниче�
 PRESENT_MODES = [('Mailbox', ('Mailbox (low latency, no tearing)', 'Mailbox (без разрывов)')),
                  ('Fifo', ('FIFO (VSync)',)), ('FifoRelaxed', ('FIFO Relaxed',)),
                  ('Immediate', ('Immediate (tearing)', 'Immediate (с разрывами)'))]
-LANGUAGES = [('1', ('English', 'Английский')), ('8', ('Russian', 'Русский')), ('0', ('Japanese', 'Японский')),
-             ('2', ('French', 'Французский')), ('3', ('Spanish', 'Испанский')), ('4', ('German', 'Немецкий')),
-             ('5', ('Italian', 'Итальянский')), ('17', ('Português (Brasil)',))]
+# Values are PS4 system language ids (sceSystemServiceParamGetInt); the game picks msg/<code>
+# itself and src/runtime_file.c points that at the folder holding the same text on this disc.
+LANGUAGES = [('1', ('English (US)', 'Английский (США)')), ('0', ('Japanese', 'Японский')),
+             ('11', ('Chinese (Simplified)', 'Китайский (упрощённый)')),
+             ('10', ('Chinese (Traditional)', 'Китайский (традиционный)')),
+             ('9', ('Korean', 'Корейский')), ('8', ('Russian', 'Русский')),
+             ('2', ('French', 'Французский')), ('3', ('Spanish (Spain)', 'Испанский (Испания)')),
+             ('20', ('Spanish (Latin America)', 'Испанский (Латинская Америка)')),
+             ('4', ('German', 'Немецкий')), ('5', ('Italian', 'Итальянский')),
+             ('6', ('Dutch', 'Нидерландский')), ('7', ('Português (Portugal)',)),
+             ('17', ('Português (Brasil)',)), ('12', ('Finnish', 'Финский')),
+             ('13', ('Swedish', 'Шведский')), ('14', ('Danish', 'Датский')),
+             ('15', ('Norwegian', 'Норвежский')), ('16', ('Polish', 'Польский')),
+             ('18', ('English (UK)', 'Английский (Великобритания)')),
+             ('19', ('Turkish', 'Турецкий'))]
 VOICE_LANGUAGES = [('auto', ('As in the game',)), ('eng', ('English',)),
                    ('ptb', ('Português (Brasil)',)), ('ded', ('Deutsch',)),
                    ('esa', ('Español (América)',)), ('ese', ('Español (España)',)),
