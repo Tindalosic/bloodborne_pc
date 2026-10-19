@@ -882,6 +882,30 @@ class Launcher:
         return self.tk.Label(parent, text=text, bg=CARD, fg=GOLD_HI, anchor='w',
                              font=(self.fonts['display'], 13))
 
+    def art_strip(self, parent, kind, height):
+        """A wide picture that fades into the page; redrawn when the column resizes."""
+        art = bbport_art.find(kind)
+        if not art:
+            return None
+        strip = self.tk.Canvas(parent, height=self.px(height), bg=PANEL, highlightthickness=0, bd=0)
+        strip.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='ew', pady=(0, self.px(6)))
+        state = {'width': 0, 'image': None}
+
+        def paint(_event=None):
+            width = strip.winfo_width()
+            if width <= 8 or width == state['width']:
+                return
+            state['width'] = width
+            strip.delete('all')
+            try:
+                state['image'] = PhotoImage(file=str(art)) if False else self.scaled_art(art, width)
+            except Exception:
+                return
+            strip.create_image(width // 2, 0, image=state['image'], anchor='n')
+
+        strip.bind('<Configure>', paint)
+        return strip
+
     def scrolled_page(self, name, title, subtitle):
         """A settings page: a heading and content that scrolls vertically."""
         tk, ttk = self.tk, self.ttk
@@ -1275,22 +1299,24 @@ class Launcher:
                Path(self.var('game_dir', 'app').get() or '.') / 'sce_sys' / 'pic1.png')
         if self.banner_source != art:
             self.banner_source, self.banner_image, self.banner_size = art, None, None
-            try:
-                self.banner_image = tk.PhotoImage(file=str(art))
-            except (tk.TclError, OSError):
-                pass
+            self.banner_image = self.load_art(art)
         if self.banner_image:
             if self.banner_size != w:
                 self.banner_size, self.banner_scaled = w, self.scaled_art(art, int(w * 1.06))
             self.banner_item = c.create_image(w // 2, int(h * 0.62), image=self.banner_scaled)
-            # The art fades into the page: a stack of stippled bands, then a solid strip.
-            bands = 9
-            for index in range(bands):
-                share = index / bands
-                y0 = int(h - h * 0.46 * (1 - share))
-                c.create_rectangle(0, y0, w, y0 + int(h * 0.46 / bands) + 1, fill=PANEL, outline='',
-                                   stipple=('gray12', 'gray25', 'gray50', 'gray75')[min(3, index * 4 // bands)])
-            c.create_rectangle(0, int(h * 0.80), w, h, fill=PANEL, outline='')
+            if 'art' in str(self.banner_source):
+                # Curated art ships with its fades baked in; a stipple stack on top of a
+                # bright painting reads as scan lines, so only the bottom strip is drawn.
+                c.create_rectangle(0, int(h * 0.86), w, h, fill=PANEL, outline='')
+            else:
+                # The game's own cover fades into the page: stippled bands, then a solid strip.
+                bands = 9
+                for index in range(bands):
+                    share = index / bands
+                    y0 = int(h - h * 0.46 * (1 - share))
+                    c.create_rectangle(0, y0, w, y0 + int(h * 0.46 / bands) + 1, fill=PANEL, outline='',
+                                       stipple=('gray12', 'gray25', 'gray50', 'gray75')[min(3, index * 4 // bands)])
+                c.create_rectangle(0, int(h * 0.80), w, h, fill=PANEL, outline='')
         else:
             for step in range(7):
                 inset = self.px(26) * step
@@ -1314,6 +1340,20 @@ class Launcher:
         c.create_text(self.px(30), h - self.px(26), text=bbport_theme.tracked(sub.upper(), 1), anchor='w',
                       fill=GOLD, font=(self.fonts['body'], 8))
         self.start_banner_pan()
+
+    def load_art(self, path):
+        """Decode any picture Tk cannot open itself (jpg, webp) through Pillow."""
+        tk = self.tk
+        try:
+            return tk.PhotoImage(file=str(path))
+        except (tk.TclError, OSError):
+            pass
+        try:
+            from PIL import Image, ImageTk
+            with Image.open(path) as image:
+                return ImageTk.PhotoImage(image.convert('RGB'))
+        except (ImportError, OSError):
+            return None
 
     def scaled_art(self, path, width):
         """The cover art scaled to `width`: Pillow (smooth) or Tk's integer subsampling."""
@@ -2343,6 +2383,7 @@ class Launcher:
         f = self.scrolled_page('about', _('About', 'О программе'),
                                _('What this build is, who made it and where to report problems.',
                                  'Что это за сборка, кто её сделал и куда сообщать о проблемах.'))
+        self.art_strip(f, 'about', 150)
         self.section(f, _('Upstream project', 'Исходный проект'), top=4)
         self.note(f, _('Bloodborne for Windows is a native Windows port of the PlayStation 4 game, by '
                        'Supermedo Mohammed Albarghouthi. The original project is here:',

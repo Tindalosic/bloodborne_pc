@@ -1,50 +1,44 @@
-# Artwork
+# 美术素材
 
-The launcher ships **no pictures**. Everything you see is either read from your
-own game dump or from a folder you fill yourself, so the repository never
-carries artwork that belongs to FromSoftware, Sony or a SteamGridDB uploader.
+启动器自己不画封面：它读玩家自己的图。这样既不会把别人的作品打进仓库，也能让每个人把界面
+换成自己喜欢的样子。
 
-## Where the pictures come from
+## 放在哪里
 
-| What | Source |
-|---|---|
-| The banner | Your dump's `sce_sys/pic1.png`, unless you override it |
-| Everything else | `art/` in the port folder (next to `Bloodborne.exe`), or `%APPDATA%\bbport-launcher\art` |
+| 目录 | 说明 |
+| --- | --- |
+| `<安装目录>\art\` | 优先。放一份既管所有账号，也随备份一起走 |
+| `%APPDATA%\bbport-launcher\art\` | 备用。只影响当前 Windows 账号 |
+| `<游戏目录>\sce_sys\pic1.png` | 兜底。玩家自己 dump 里的封面 |
 
-The port folder wins when a name exists in both places.
+文件名固定、大小写随意、后缀支持 `.png .jpg .jpeg .webp`：
 
-## Names the launcher looks for
+| 文件 | 用在哪 | 建议尺寸 |
+| --- | --- | --- |
+| `hero.*` | 开始页顶部横幅（优先于 dump 封面） | 4:1 以上，2400×585 起 |
+| `about.*` | 关于页顶部的横条 | 5:1 左右，1600×300 |
+| `empty.*` | 「模组与补丁」页的空白状态配图 | 4:3 左右，720×540 |
 
-| File | Used for |
-|---|---|
-| `hero.png` | The banner on the first page (any of `.png`, `.jpg`, `.jpeg`, `.webp`) |
-| `empty.png` | The empty patch list on “Mods & patches” |
+改完重开启动器即可；「高级」页会显示当前生效的目录，点一下直接打开。
 
-Names are matched case-insensitively; the extension must be one of the four
-above. A new file is picked up on the next launch (the lookup is cached against
-the folder's timestamp, so no restart loop is needed while it is open).
+## 发行包自带的三张
 
-## Where to get one — SteamGridDB
+`packaging/windows/package.sh` 会把仓库里的 `assets/art/` 复制成安装目录的 `art/`。
+这三张不是游戏素材，是从公开壁纸站挑选、再按本界面重新裁切调色的同人／摄影向作品：
 
-<https://www.steamgriddb.com/search/grids?term=bloodborne> has hero, grid and
-logo images made by the community for Bloodborne. Pick one you like, download
-the file, rename it to `hero.png` and drop it into `art/`.
+| 文件 | 来源 |
+| --- | --- |
+| `hero.jpg`、`about.jpg` | Wallhaven `6d7yxx`（猎人剪影／苍白的林间），`4dgy63`（亚南街景） |
+| `empty.jpg` | Wallhaven `d5g523`（人物肖像） |
 
-Two honest caveats:
+**`assets/art/` 不进 git**（`.gitignore` 里已排除），只随发行包分发：图的著作权属于原作者，
+仓库按 GPL-2.0-or-later 分发，不该把别人的画一起授权出去。要换掉它们，直接覆盖
+`art/` 下的同名文件即可。
 
-- **SteamGridDB is a gallery, not a licence.** Every upload belongs to whoever
-  made it; a few are derivative of official art. For personal use that is
-  normally fine, but they are *not* redistributable — which is exactly why the
-  launcher reads them from your disk instead of bundling them, and why releases
-  never contain them.
-- **The launcher cannot download them for you.** SteamGridDB's API needs a
-  per-user key and its pages are rendered in the browser, so automated fetching
-  would mean asking every player for a key. Dropping a file in a folder is the
-  version that works for everyone.
+## 想自己找图
 
-## How it fits the design
+SteamGridDB 的图库很适合这个比例（`https://www.steamgriddb.com/search/grids?term=bloodborne`），
+它没有公开的匿名 API，所以启动器不代你下载——浏览、挑一张、存成 `hero.png` 放进去就行。
 
-`docs/UI-BRIEF.md` asks for one picture, not a collage: the banner is the only
-place a photo belongs. If you skip it entirely the first page still has a
-composition (a procedural radial backdrop with the tracked `BLOODBORNE`
-wordmark), because the blank case was designed first and the photo second.
+裁切建议：横幅默认按 4:1 取中间偏上，人物头顶留一点空；把最亮的区域放在右侧，
+左侧会被界面的暗角吃掉，主标题正好落在那里。

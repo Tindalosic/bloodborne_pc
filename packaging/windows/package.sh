@@ -54,6 +54,9 @@ ldd "$dest/bin/bb-probe.exe" "$dest/bin/bb-gpu-capabilities.exe" |
 cp -r scripts patches "$dest/"
 # Locale packs ship next to the launcher: players can edit them without a build.
 if [[ -d locale ]]; then cp -r locale "$dest/"; fi
+# Curated art (not in git: the pictures belong to their artists). The launcher reads
+# art/ before the dump's own cover, so dropping files here changes the banner.
+if [[ -d assets/art ]]; then mkdir -p "$dest/art" && cp assets/art/* "$dest/art/"; fi
 # Legacy CPU (Intel 3rd generation and older): the translation plan scripts/cpu_compat.py applies.
 mkdir -p "$dest/tools" && cp tools/legacy-cpu-plan.json "$dest/tools/"
 cp run.py LICENSE README.md packaging/windows/README-Windows.txt "$dest/"

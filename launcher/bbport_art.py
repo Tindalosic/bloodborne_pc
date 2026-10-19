@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 # Names the launcher looks for, in order of preference.
-KINDS = ('hero', 'empty')
+KINDS = ('hero', 'empty', 'about')
 SUFFIXES = ('.png', '.jpg', '.jpeg', '.webp')
 GALLERY = 'https://www.steamgriddb.com/search/grids?term=bloodborne'
 
