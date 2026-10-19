@@ -210,4 +210,12 @@ ZH2 = {
     'Play with': '游玩方式',
     'System pages': '系统',
     'Info pages': '信息',
+    # The empty patch list and the artwork hint.
+    'No patches for version 1.09 yet': '还没有适用于 1.09 的补丁',
+    'Download community patches fetches the shadPS4 list; your own XML files work too, and both live in the patches folder.':
+        '「下载社区补丁」会抓取 shadPS4 的补丁列表；你自己的 XML 也能用，两者都放在补丁文件夹里。',
+    'No community list yet: Download community patches fetches it.':
+        '还没有社区补丁列表：「下载社区补丁」会获取它。',
+    'Artwork: drop hero.png or empty.png into': '美术素材：把 hero.png 或 empty.png 放进',
+    '(SteamGridDB has good ones)': '（SteamGridDB 上有很多好的）',
 }

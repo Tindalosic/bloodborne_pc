@@ -138,6 +138,7 @@ import bbport_trophies as trophies  # noqa: E402
 import bbport_trophy_text as trophy_text  # noqa: E402
 from bbport_patches import catalogue_path, describe as describe_catalogue, \
     install as install_catalogue  # noqa: E402
+import bbport_art  # noqa: E402
 import bbport_theme  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
@@ -1268,7 +1269,10 @@ class Launcher:
         c.delete('all')
         self.banner_item = None
         w, h = max(c.winfo_width(), 400), int(c['height'])
-        art = Path(self.var('game_dir', 'app').get() or '.') / 'sce_sys' / 'pic1.png'
+        # The player's own picture wins over the dump's cover, so a SteamGridDB hero
+        # can be dropped into the art folder without touching the game files.
+        art = (bbport_art.find('hero') or
+               Path(self.var('game_dir', 'app').get() or '.') / 'sce_sys' / 'pic1.png')
         if self.banner_source != art:
             self.banner_source, self.banner_image, self.banner_size = art, None, None
             try:
@@ -1718,6 +1722,58 @@ class Launcher:
         self.trophy_body = self.ttk.Frame(f)
         self.trophy_body.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
 
+    def ring(self, parent, percent, size=None):
+        """A gold arc on a dim track: the completion dial the header wanted."""
+        size = size or self.px(58)
+        width = max(3, self.px(4))
+        dial = self.tk.Canvas(parent, width=size, height=size, bg=CARD, highlightthickness=0, bd=0)
+        dial.pack(anchor='w')
+        pad = width
+        dial.create_oval(pad, pad, size - pad, size - pad, outline=LINE, width=width)
+        if percent:
+            dial.create_arc(pad, pad, size - pad, size - pad, start=90, extent=-3.6 * min(percent, 100),
+                            style='arc', outline=GOLD, width=width)
+        dial.create_text(size / 2, size / 2, text=f'{percent}%', fill=TEXT,
+                         font=(self.fonts['display'], 11))
+        return dial
+
+    def show_art_folder(self):
+        """Open the artwork folder, creating it first so the click always works."""
+        folder = bbport_art.folder()
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            return
+        self.open_path(folder)
+
+    def patch_empty(self):
+        """What the patch list shows before anything is downloaded."""
+        frame = self.tk.Frame(self.patches_frame, bg=CARD, highlightthickness=1, highlightbackground=LINE)
+        frame.pack(fill='x', pady=(6, 0))
+        art = bbport_art.find('empty')
+        picture = None
+        if art:
+            try:
+                picture = self.tk.PhotoImage(file=str(art))
+            except (self.tk.TclError, OSError):
+                picture = None
+        if picture:
+            scale = min(1.0, self.px(120) / max(picture.width(), 1))
+            if scale < 1.0:
+                picture = picture.subsample(max(1, round(1 / scale)))
+            label = self.tk.Label(frame, image=picture, bg=CARD, bd=0)
+            label.image = picture
+            label.pack(side='left', padx=(16, 14), pady=14)
+        text = self.tk.Frame(frame, bg=CARD)
+        text.pack(side='left', fill='x', expand=True, pady=14, padx=(0 if picture else 16, 16))
+        self.tk.Label(text, text=_('No patches for version 1.09 yet', 'Патчей для версии 1.09 пока нет'),
+                      bg=CARD, fg=TEXT, font=(self.fonts['body'], 11, 'bold')).pack(anchor='w')
+        self.tk.Label(text, text=_('Download community patches fetches the shadPS4 list; your own XML files '
+                                   'work too, and both live in the patches folder.',
+                                   'Кнопка ниже скачает список shadPS4; свои XML тоже работают.'),
+                      bg=CARD, fg=MUTED, font=(self.fonts['body'], 9), justify='left',
+                      wraplength=self.px(560)).pack(anchor='w', pady=(3, 0))
+
     def trophy_icon(self, parent, grade, earned, size, bg):
         """A trophy cup in the colour of its grade (dim while locked), on a round plate."""
         c = self.tk.Canvas(parent, width=size, height=size, bg=bg, highlightthickness=0, bd=0)
@@ -1751,12 +1807,7 @@ class Launcher:
         card.pack(fill='x', pady=(4, 0))
         left = tk.Frame(card, bg=CARD)
         left.pack(side='left', padx=22, pady=16)
-        tk.Label(left, text=f'{percent}%', bg=CARD, fg=TEXT, font=('Georgia', 26)).pack(anchor='w')
-        width, height = self.px(260), max(3, self.px(4))
-        bar = tk.Canvas(left, width=width, height=height, bg=LINE, highlightthickness=0, bd=0)
-        bar.pack(anchor='w', pady=(2, 8))
-        if earned:
-            bar.create_rectangle(0, 0, max(height, width * len(earned) // len(known)), height, fill=GOLD, outline='')
+        self.ring(left, percent)
         tk.Label(left, text=_('{} of {} trophies earned', '{} из {} трофеев получено').format(len(earned), len(known)),
                  bg=CARD, fg=MUTED, font=('Segoe UI', 9)).pack(anchor='w')
         grades = tk.Frame(card, bg=CARD)
@@ -1817,8 +1868,10 @@ class Launcher:
         card = tk.Frame(parent, bg=CARD, highlightthickness=1, highlightbackground=LINE)
         card.pack(fill='x', pady=(0, 6))
         # A painted photo, not a Canvas per card: 40 canvases cost ~160 ms per rebuild.
-        tk.Label(card, image=bbport_theme.cup(self.tk, self.px(22), TROPHY_COLORS[grade] if earned else TROPHY_LOCKED,
-                                              CARD), bg=CARD).pack(side='left', padx=(14, 14), pady=12)
+        # Locked cups keep a wash of their grade colour, so the row still reads as bronze/silver/gold.
+        tint = TROPHY_COLORS[grade] if earned else bbport_theme.blend(TROPHY_COLORS[grade], CARD, 0.66)
+        tk.Label(card, image=bbport_theme.cup(self.tk, self.px(22), tint, CARD),
+                 bg=CARD).pack(side='left', padx=(14, 14), pady=12)
         middle = tk.Frame(card, bg=CARD)
         middle.pack(side='left', fill='x', expand=True, pady=10)
         tk.Label(middle, text=name, bg=CARD, fg=TEXT if earned else MUTED,
@@ -2241,6 +2294,16 @@ class Launcher:
                                             'Анимация окна (наведение, панорама обложки)'),
                    _('Turning it off also stops the timer that drives the animations.',
                      'Выключение останавливает и таймер, который их двигает.'))
+        art_note = ttk.Frame(f)
+        art_note.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(6, 0))
+        ttk.Label(art_note, text=_('Artwork: drop hero.png or empty.png into',
+                                   'Картинки: положите hero.png или empty.png в'),
+                  style='Muted.TLabel').pack(side='left')
+        where = ttk.Label(art_note, text=bbport_art.folder(), style='Link.TLabel', cursor='hand2')
+        where.pack(side='left', padx=(6, 0))
+        where.bind('<Button-1>', lambda _e: self.show_art_folder())
+        ttk.Label(art_note, text=_('(SteamGridDB has good ones)', '(хорошие есть на SteamGridDB)'),
+                  style='Muted.TLabel').pack(side='left', padx=(8, 0))
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
         ttk.Button(holder, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut).pack(side='left')
@@ -2524,10 +2587,7 @@ class Launcher:
         self.patch_vars = {}
         self.patch_metas = {}
         if not found:
-            ttk.Label(self.patches_frame, text=_('No patch files for version 1.09 yet: Download community '
-                                                 'patches puts the shadPS4 list here.',
-                                                 'Пока нет патчей для версии 1.09.'),
-                      style='Muted.TLabel').pack(anchor='w')
+            self.patch_empty()
         source = None
         for key, path, meta in found:
             if path.name != source:
