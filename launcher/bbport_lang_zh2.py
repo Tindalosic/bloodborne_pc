@@ -220,4 +220,37 @@ ZH2 = {
     '(SteamGridDB has good ones)': '（SteamGridDB 上有很多好的）',
     'Animate the window (hover, banner pan)': '界面动效（悬停、封面平移）',
     'Turning it off also stops the timer that drives the animations.': '关闭后，驱动这些动画的定时器也会停止。',
+    # Release channels and the shared data folder (bbport_channels.py).
+    'Release channel': '更新渠道',
+    'This installation follows {}: updates, the version list and the download links come from {} only.':
+        '本安装跟随 {}：更新、版本列表与下载链接只来自 {}。',
+    'The other channel is installed beside this one, not over it; both share the data folder below.':
+        '另一渠道装在旁边而不是覆盖本安装；两者共用下方的数据目录。',
+    'Install the {} channel beside this one': '在旁边安装{}渠道',
+    'Shared data folder: {}': '共用数据目录：{}',
+    'Share this folder with the other installation': '让另一套安装共用此目录',
+    "Back to this installation's own folder": '改回本安装自己的目录',
+    'Saves, mods, patches, bbport.ini and the shader caches live in the shared folder; the binaries '
+    'stay in each installation. A change applies when the launcher opens again.':
+        '存档、模组、补丁、bbport.ini 与着色器缓存放在共用目录；程序本体仍各在各的安装里。改动在启动器重新打开后生效。',
+    'Choose the folder the other installation should share': '选择另一套安装要共用的目录',
+    'Stop the game first.': '请先停止游戏。',
+    '{} is not installed yet. Download its newest release into\n{}\n\nThis installation keeps its '
+    'files; both will share the data folder.':
+        '{} 还没有安装。要把它的最新版本下载到\n{}\n\n本安装的文件不会改动；两者会共用数据目录。',
+    'Downloading {} {}…': '正在下载 {} {}…',
+    'Could not install {}: {}': '无法安装 {}：{}',
+    'Could not start {}: {}': '无法启动 {}：{}',
+    'Saves, mods and settings of this installation now come from {}. It applies when the launcher '
+    'opens again.': '本安装的存档、模组与设置现在来自 {}。改动在启动器重新打开后生效。',
+    'This installation uses its own folder again. It applies when the launcher opens again.':
+        '本安装已改回自己的目录。改动在启动器重新打开后生效。',
+    'the release has no zip attached': '该版本没有附带 zip',
+    'This is a fork of the upstream project, maintained by Tindalosic, built on upstream release '
+    '{}. Its own releases are numbered from 2.0.0 so the two never collide. On top of it:':
+        '这是上游项目的分支版本，由 Tindalosic 维护，基于上游 {} 版。它的自发布版本号从 2.0.0 起，两者不会混淆。在此之上：',
+    'Releases: this installation follows {}. Updates, the version list and the download links below '
+    'all come from that repository, and the other channel can be installed next to this one from '
+    'the Advanced page.':
+        '发布：本安装跟随 {}。下方更新、版本列表与下载链接都来自该仓库；另一渠道可在「高级」页装到本安装旁边。',
 }

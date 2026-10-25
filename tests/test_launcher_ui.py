@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 
@@ -173,5 +174,42 @@ class LauncherWindowTests(unittest.TestCase):
         finally:
             self.launcher.webbrowser.open = original
         self.assertEqual(opened, [self.launcher.PROJECT_URL])
+
+    def test_the_log_can_be_written_before_its_page_is_built(self):
+        # The Play button writes to the log, but pages build on first visit: on a fresh window the
+        # Log page does not exist yet. That used to raise AttributeError inside a Tk callback, which
+        # Tk swallows - the Play button looked dead. The lines have to wait in a buffer instead.
+        fake = types.SimpleNamespace()
+        self.launcher.Launcher.append(fake, 'first line\n')
+        self.launcher.Launcher.append(fake, 'second line\n')
+        self.assertEqual(''.join(fake.pending_log), 'first line\nsecond line\n')
+        self.launcher.Launcher.set_log(fake, 'replaced\n')
+        self.assertEqual(fake.pending_log, ['replaced\n'])
+        copied = []
+        fake.root = types.SimpleNamespace(clipboard_clear=lambda: None, clipboard_append=copied.append)
+        self.launcher.Launcher.copy_log(fake)
+        self.assertEqual(copied, ['replaced\n'])
+
+    def test_version_warning_names_the_version_instead_of_a_placeholder(self):
+        # version_warning() builds a label from a template that refresh_status fills in later. The
+        # pages carrying it are built on first visit, after that refresh has already run, so the
+        # label has to be settled where it is created or it shows a literal {}.
+        original = self.launcher.game_info
+        self.launcher.game_info = lambda folder: ('Bloodborne The Old Hunters Edition', '1.05')
+        holder = self.tk.Frame(self.root)  # version_warning grids into its parent, so give it one
+        holder.pack()
+        try:
+            before = len(self.app.warnings)
+            self.app.version_warning(holder)
+            label = self.app.warnings[before]
+            text = label.cget('text')
+            shown = label.winfo_manager()
+        finally:
+            self.launcher.game_info = original
+            holder.destroy()
+        self.assertNotIn('{}', text, 'the version banner still shows a placeholder')
+        self.assertIn('1.05', text)
+        self.assertEqual(shown, 'grid', 'the banner for an old dump is not shown')
+
 if __name__ == '__main__':
     unittest.main()

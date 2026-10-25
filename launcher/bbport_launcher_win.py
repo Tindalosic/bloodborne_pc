@@ -33,7 +33,11 @@ import zipfile
 FROZEN = getattr(sys, 'frozen', False)
 PORT_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PORT_DIR / 'scripts'))
-DATA_DIR = Path(os.environ.get('BB_DATA_DIR', PORT_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bbport_channels as channels  # noqa: E402
+# Saves, mods, patches, bbport.ini and the shader caches: data-dir.txt beside the executable can
+# point a second installation at the same folder, and BB_DATA_DIR still wins over both.
+DATA_DIR = channels.data_dir(PORT_DIR)
 # Co-op test build: its own settings, and no updates (a public release would replace it).
 COOP_TEST = False
 CONFIG_DIR = Path(os.environ.get('APPDATA', Path.home())) / ('bbport-launcher-coop' if COOP_TEST else 'bbport-launcher')
@@ -41,22 +45,31 @@ CONFIG_FILE = CONFIG_DIR / 'settings.json'
 PATCH_VERSION = '01.09'
 MAX_LOG_LINES = 6000
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
-# This build; GitHub release tags are windows-v<VERSION>.
-VERSION = '1.9.2'
+# This build; GitHub release tags are windows-v<VERSION>. This fork numbers its own releases from
+# 2.0.0 so they never collide with the upstream ones (which stop in the 1.9.x series) and so a
+# channel switch compares releases of one repository only.
+VERSION = '2.0.0'
+# The upstream release this fork's work is built on, named on the About page.
+UPSTREAM_BASE = '1.9.2'
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
-RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
-RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
-# The upstream project this build is forked from; shown on the About page.
-PROJECT_URL = 'https://github.com/Supermedo/bloodborne_pc'
-FORK_URL = 'https://github.com/Tindalosic/bloodborne_pc'
-RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
-# The oldest version Advanced > Other versions offers: older ones cannot install themselves the
-# same way (--install-update) or read today's settings.
-OLDEST_INSTALLABLE = '1.8.2'
+PROJECT_URL = channels.CHANNELS['upstream']['project']
+FORK_URL = channels.CHANNELS['fork']['project']
+UPSTREAM_RELEASES_PAGE = channels.CHANNELS['upstream']['page']
 UPDATE_DIR = Path(tempfile.gettempdir()) / 'bbport-update'
-# Never copied over an installation by an update (the package does not hold them either).
-USER_FILES = ('user', 'out', 'mods', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log')
+# Never copied over an installation by an update (the package does not hold them either). The two
+# channel markers are listed so an updated installation keeps asking the repository it already
+# follows and keeps sharing the data folder it already shares.
+USER_FILES = ('user', 'out', 'mods', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log',
+              'channel.txt', 'data-dir.txt')
+
+
+def channel_info():
+    """The release facts of the channel this installation follows.
+
+    Read on every call rather than once at import: the Advanced page switches the channel in a
+    running launcher, and the next update check must already ask the new repository."""
+    return channels.of(channels.read(PORT_DIR))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -620,6 +633,7 @@ class Launcher:
         self.gpu_text = _('• Checking the graphics card…', '• Проверка видеокарты…')
         self.banner_source = self.banner_image = None
         self.ui_calls = queue.Queue()  # work for the Tk thread from helper threads
+        self.warnings = []  # version_warning labels, settled again by refresh_status
         self.mod_order, self.mod_vars, self.patch_vars = [], {}, {}
         self.fonts = bbport_theme.fonts(root, LANG)
         self.animations = {}  # after() ids by name, so leaving a page cannot leave a timer behind
@@ -2358,6 +2372,45 @@ class Launcher:
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
+
+        self.section(f, _('Release channel', 'Канал обновлений'))
+        current = channels.read(PORT_DIR)
+        info = channels.of(current)
+        self.channel_label = ttk.Label(f, text=_(
+            'This installation follows {}: updates, the version list and the download links come '
+            'from {} only.', 'Эта установка следует за {}: обновления, список версий и ссылки на '
+            'скачивание берутся только из {}. ').format(info['label'], info['repo']),
+            style='Muted.TLabel', wraplength=self.px(640), justify='left')
+        self.channel_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 0))
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(6, 0))
+        self.channel_button = ttk.Button(holder, text=self.channel_button_text(current),
+                                         command=lambda: self.switch_channel(channels.other(channels.read(PORT_DIR))))
+        self.channel_button.pack(side='left')
+        self.channel_hint = ttk.Label(holder, text=_(
+            'The other channel is installed beside this one, not over it; both share the data folder '
+            'below.', 'Другой канал ставится рядом, а не поверх; оба используют папку данных ниже.'),
+            style='Muted.TLabel', wraplength=self.px(420), justify='left')
+        self.channel_hint.pack(side='left', padx=(10, 0))
+        self.data_label = ttk.Label(f, text=_('Shared data folder: {}', 'Общая папка данных: {}').format(
+            DATA_DIR), style='Muted.TLabel', wraplength=self.px(640), justify='left')
+        self.data_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(6, 0))
+        ttk.Button(holder, text=_('Share this folder with the other installation',
+                                  'Сделать эту папку общей для другой установки'),
+                   command=self.choose_data_dir).pack(side='left')
+        ttk.Button(holder, text=_('Back to this installation\'s own folder',
+                                  'Вернуть собственную папку этой установки'),
+                   command=self.reset_data_dir).pack(side='left', padx=(6, 0))
+        ttk.Label(f, text=_('Saves, mods, patches, bbport.ini and the shader caches live in the shared '
+                            'folder; the binaries stay in each installation. A change applies when the '
+                            'launcher opens again.',
+                            'Сохранения, моды, патчи, bbport.ini и кэши шейдеров лежат в общей папке; '
+                            'исполняемые файлы остаются в своей установке. Изменение применится при '
+                            'следующем открытии лаунчера.'),
+                  style='Muted.TLabel', wraplength=self.px(640), justify='left').grid(
+            row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(6, 0))
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
         ttk.Button(holder, text=_('Clear shader cache', 'Очистить кэш шейдеров'), command=self.clear_cache).pack(side='left')
@@ -2390,10 +2443,13 @@ class Launcher:
                        'Bloodborne for Windows — нативный порт игры для PlayStation 4 от Supermedo '
                        'Mohammed Albarghouthi. Исходный проект:'), top=2)
         self.link(f, PROJECT_URL)
-        self.link(f, RELEASES_PAGE, _('Downloads and release notes', 'Загрузки и список изменений'), top=2)
+        self.link(f, UPSTREAM_RELEASES_PAGE, _('Downloads and release notes', 'Загрузки и список изменений'), top=2)
         self.section(f, _('This build', 'Эта сборка'))
-        self.note(f, _('This is a fork of the upstream project, maintained by Tindalosic. On top of it:',
-                       'Это форк исходного проекта, его поддерживает Tindalosic. Дополнительно:'), top=2)
+        self.note(f, _('This is a fork of the upstream project, maintained by Tindalosic, built on upstream '
+                       'release {}. Its own releases are numbered from 2.0.0 so the two never collide. '
+                       'On top of it:', 'Это форк исходного проекта, его поддерживает Tindalosic, он основан на '
+                       'релизе {} исходного проекта. Собственные релизы форка нумеруются с 2.0.0, чтобы они не '
+                       'пересекались. Дополнительно:').format(UPSTREAM_BASE), top=2)
         self.note(f, _('• Game text languages: all 21 the disc carries, including Chinese (Simplified), '
                        'Chinese (Traditional) and Korean, each falling back to English when a file is '
                        'missing.',) , top=6)
@@ -2402,7 +2458,12 @@ class Launcher:
                        ) , top=4)
         self.note(f, _('• Achievements: Chinese names and descriptions, and launcher texts can be '
                        'overridden with locale packs (see docs/TRANSLATING.md).',), top=4)
-        self.note(f, _('This fork:', 'Этот форк:'), top=8)
+        self.note(f, _('Releases: this installation follows {}. Updates, the version list and the download '
+                       'links below all come from that repository, and the other channel can be installed '
+                       'next to this one from the Advanced page.',
+                       'Релизы: эта установка следует за {}. Обновления, список версий и ссылки на скачивание '
+                       'берутся из этого репозитория; другой канал можно установить рядом на странице '
+                       '«Дополнительно».').format(channel_info()['label']), top=8)
         self.link(f, FORK_URL, FORK_URL, top=2)
         self.section(f, _('Credits', 'Благодарности'))
         self.note(f, _('Graphics translation is built on shadPS4. The Hunter\'s Dream connection is '
@@ -2431,6 +2492,10 @@ class Launcher:
         self.log.configure(yscrollcommand=bar.set)
         bar.pack(side='right', fill='y')
         self.log.pack(fill='both', expand=True)
+        pending = getattr(self, 'pending_log', None)
+        if pending:
+            self.pending_log = []
+            self.set_log(''.join(pending))
 
     def version_warning(self, parent):
         """A banner shown while the selected game is not version 1.09 (refresh_status)."""
@@ -2441,7 +2506,15 @@ class Launcher:
             'Обновите дамп до 1.09, чтобы их использовать.'))
         label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(6, 4))
         label.template = label.cget('text')
-        self.warnings = getattr(self, 'warnings', []) + [label]
+        # These pages are built on first visit, long after the Play page ran refresh_status, so the
+        # banner has to be settled here as well - otherwise it shows a literal {} until the next
+        # status refresh happens to pass by.
+        info = game_info(self.var('game_dir', 'app').get())
+        if info and info[1] != PATCH_VERSION:
+            label.configure(text=label.template.format(info[1]))
+        else:
+            label.grid_remove()
+        self.warnings.append(label)
 
     # ---- state -------------------------------------------------------------------------------
     def game_changed(self):
@@ -2884,23 +2957,40 @@ class Launcher:
             self.job.terminate()
 
     def append(self, text):
-        self.log.configure(state='normal')
-        self.log.insert('end', text)
-        lines = int(self.log.index('end-1c').split('.')[0])
+        """Add a line to the Log page. Pages are built on first visit, so the first lines the Play
+        button writes arrive before the Log page exists: they wait in a buffer that build_log
+        drains, instead of raising an AttributeError that Tk swallows silently."""
+        log = getattr(self, 'log', None)
+        if log is None:
+            pending = getattr(self, 'pending_log', None)
+            if pending is None:
+                pending = self.pending_log = []
+            pending.append(text)
+            del pending[:-MAX_LOG_LINES]
+            return
+        log.configure(state='normal')
+        log.insert('end', text)
+        lines = int(log.index('end-1c').split('.')[0])
         if lines > MAX_LOG_LINES:
-            self.log.delete('1.0', f'{lines - MAX_LOG_LINES}.0')
-        self.log.see('end')
-        self.log.configure(state='disabled')
+            log.delete('1.0', f'{lines - MAX_LOG_LINES}.0')
+        log.see('end')
+        log.configure(state='disabled')
 
     def set_log(self, text):
-        self.log.configure(state='normal')
-        self.log.delete('1.0', 'end')
-        self.log.insert('end', text)
-        self.log.configure(state='disabled')
+        log = getattr(self, 'log', None)
+        if log is None:
+            self.pending_log = [text] if text else []
+            return
+        log.configure(state='normal')
+        log.delete('1.0', 'end')
+        log.insert('end', text)
+        log.configure(state='disabled')
 
     def copy_log(self):
+        log = getattr(self, 'log', None)
         self.root.clipboard_clear()
-        self.root.clipboard_append(self.log.get('1.0', 'end'))
+        self.root.clipboard_append(log.get('1.0', 'end') if log is not None
+                                   else ''.join(getattr(self, 'pending_log', [])))
 
     def open_path(self, path, key=None):
         if key == 'user_dir' and not path:
@@ -2975,7 +3065,7 @@ class Launcher:
             self.messagebox.showinfo('Bloodborne', _('Close the game before updating.', 'Закройте игру перед обновлением.'))
             return False
         if not FROZEN or not url:  # a source tree updates with git
-            webbrowser.open(page)
+            webbrowser.open(page or channel_info()['page'])
             return False
         if version_tuple(version) < version_tuple(VERSION):
             question = _('Install the older version {} now? The launcher closes, installs it and opens again. Saves and '
@@ -3024,7 +3114,8 @@ class Launcher:
         return True
 
     def choose_version(self):
-        """Advanced > Other versions: any release from OLDEST_INSTALLABLE on, chosen by the player."""
+        """Advanced > Other versions: any release of this channel from its oldest installable
+        version on, chosen by the player."""
         if self.version_window and self.version_window.winfo_exists():
             self.version_window.lift()
             return
@@ -3039,7 +3130,7 @@ class Launcher:
         frame.pack(fill='both', expand=True)
         ttk.Label(frame, text=_('Install another version of the port, newer or older (back to {}). Saves, settings '
                                 'and mods are kept.', 'Установить другую версию порта, новее или старше (до {}). '
-                                'Сохранения, настройки и моды останутся.').format(OLDEST_INSTALLABLE),
+                                'Сохранения, настройки и моды останутся.').format(channel_info()['oldest']),
                   wraplength=self.px(380), justify='left').pack(anchor='w')
         status = ttk.Label(frame, text=_('Loading the list of versions…', 'Загрузка списка версий…'),
                            style='Muted.TLabel', wraplength=self.px(380), justify='left')
@@ -3122,6 +3213,111 @@ class Launcher:
                 return
             self.ui_calls.put(lambda: show(versions))
         threading.Thread(target=fetch, daemon=True).start()
+
+    # ---- channels ------------------------------------------------------------------------------
+    def channel_button_text(self, current):
+        return _('Install the {} channel beside this one', 'Установить канал «{}» рядом с этой установкой').format(
+            channels.of(channels.other(current))['label'])
+
+    def other_install(self, name):
+        """The folder a second installation of `name` lives in: a sibling of this one."""
+        return PORT_DIR.parent / f'{PORT_DIR.name}-{name}'
+
+    def default_data_dir(self):
+        """The folder both installations share: this one's, unless it already points elsewhere."""
+        return channels.data_dir(PORT_DIR)
+
+    def switch_channel(self, name):
+        """Install or open the other channel beside this one. Nothing here is replaced."""
+        if name == channels.read(PORT_DIR):
+            return
+        target = self.other_install(name)
+        info = channels.of(name)
+        if (target / 'Bloodborne.exe').is_file():
+            channels.save(target, name)
+            channels.save_data_dir(target, self.default_data_dir())
+            self.open_other_install(target, info['label'])
+            return
+        if self.process:
+            self.messagebox.showinfo('Bloodborne', _(
+                'Stop the game first.', 'Сначала остановите игру.'))
+            return
+        if not self.messagebox.askyesno('Bloodborne', _(
+                '{} is not installed yet. Download its newest release into\n{}\n\nThis installation '
+                'keeps its files; both will share the data folder.',
+                '{} ещё не установлен. Скачать его новейший релиз в\n{}\n\nФайлы этой установки не '
+                'изменятся; обе будут использовать общую папку данных.').format(info['label'], target)):
+            return
+        threading.Thread(target=self.install_channel, args=(target, name), daemon=True).start()
+
+    def install_channel(self, target, name):
+        """Helper thread: fetch the newest release of `name` and unpack it beside this installation."""
+        info = channels.of(name)
+        try:
+            version, url, _page = latest_release(name)
+            if not url:
+                raise OSError(_('the release has no zip attached', 'у релиза нет zip-файла'))
+            self.ui_calls.put(lambda: self.set_status(
+                _('Downloading {} {}…', 'Загрузка {} {}…').format(info['label'], version), GOLD))
+            shutil.rmtree(UPDATE_DIR, ignore_errors=True)
+            UPDATE_DIR.mkdir(parents=True, exist_ok=True)
+            archive = UPDATE_DIR / 'channel.zip'
+            with urllib.request.urlopen(url, timeout=60) as response, archive.open('wb') as out:
+                while chunk := response.read(1 << 20):
+                    out.write(chunk)
+            unpacked = UPDATE_DIR / 'channel'
+            with zipfile.ZipFile(archive) as bundle:
+                bundle.extractall(unpacked)
+            source = next((item.parent for item in unpacked.rglob('Bloodborne.exe')), None)
+            if source is None:
+                raise OSError(_('Bloodborne.exe is missing from the download',
+                                'в загрузке нет Bloodborne.exe'))
+            shutil.copytree(source, target, dirs_exist_ok=True)
+            channels.save(target, name)
+            channels.save_data_dir(target, self.default_data_dir())
+        except (OSError, ValueError, KeyError, zipfile.BadZipFile) as failure:
+            self.ui_calls.put(lambda error=failure: self.messagebox.showerror('Bloodborne', _(
+                'Could not install {}: {}', 'Не удалось установить {}: {}').format(info['label'], error)))
+            return
+        self.ui_calls.put(lambda: self.open_other_install(target, info['label']))
+
+    def open_other_install(self, target, label):
+        """Start the other installation and close this one: the two never run at the same time."""
+        try:
+            subprocess.Popen([str(target / 'Bloodborne.exe')], cwd=str(target), stdin=subprocess.DEVNULL,
+                             creationflags=NO_WINDOW)
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('Could not start {}: {}', 'Не удалось запустить {}: {}')
+                                      .format(label, error))
+            return
+        self.root.destroy()
+
+    def choose_data_dir(self):
+        """Point this installation (and the other one, if present) at a shared data folder."""
+        folder = self.filedialog.askdirectory(
+            title=_('Choose the folder the other installation should share',
+                    'Выберите папку, которую будет использовать вторая установка'),
+            initialdir=str(self.default_data_dir()))
+        if not folder:
+            return
+        channels.save_data_dir(PORT_DIR, folder)
+        for name in channels.ORDER:
+            other = self.other_install(name)
+            if name != channels.read(PORT_DIR) and (other / 'Bloodborne.exe').is_file():
+                channels.save_data_dir(other, folder)
+        self.data_label.configure(text=_('Shared data folder: {}', 'Общая папка данных: {}').format(folder))
+        self.messagebox.showinfo('Bloodborne', _(
+            'Saves, mods and settings of this installation now come from {}. It applies when the '
+            'launcher opens again.', 'Сохранения, моды и настройки этой установки теперь берутся из {}. '
+            'Применится при следующем открытии лаунчера.').format(folder))
+
+    def reset_data_dir(self):
+        """Back to the folder next to this installation's own executable."""
+        channels.save_data_dir(PORT_DIR, '')
+        self.data_label.configure(text=_('Shared data folder: {}', 'Общая папка данных: {}').format(PORT_DIR))
+        self.messagebox.showinfo('Bloodborne', _(
+            'This installation uses its own folder again. It applies when the launcher opens again.',
+            'Эта установка снова использует собственную папку. Применится при следующем открытии лаунчера.'))
 
     def clear_cache(self):
         """Shader and pipeline caches; they are rebuilt while playing."""
@@ -3261,23 +3457,27 @@ def version_tuple(text):
     return tuple(int(number) for number in re.findall(r'\d+', text or ''))
 
 
-def latest_release():
-    """(version, zip URL, page URL) of the newest GitHub release."""
-    request = urllib.request.Request(RELEASES_API, headers={'Accept': 'application/vnd.github+json',
-                                                            'User-Agent': 'bbport-launcher'})
+def latest_release(name=None):
+    """(version, zip URL, page URL) of the newest GitHub release of one channel."""
+    info = channels.of(name) if name else channel_info()
+    request = urllib.request.Request(info['api'], headers={'Accept': 'application/vnd.github+json',
+                                                           'User-Agent': 'bbport-launcher'})
     with urllib.request.urlopen(request, timeout=15) as response:
         release = json.load(response)
     version = '.'.join(re.findall(r'\d+', release['tag_name']))
     url = next((asset['browser_download_url'] for asset in release.get('assets', [])
                 if asset.get('name', '').lower().endswith('.zip')), None)
-    return version, url, release.get('html_url') or RELEASES_PAGE
+    return version, url, release.get('html_url') or info['page']
 
 
-def installable_releases():
-    """[(version, zip URL, page URL)] of the published releases from OLDEST_INSTALLABLE on, newest
-    first (drafts, pre-releases and releases without a zip left out)."""
-    request = urllib.request.Request(RELEASES_LIST_API, headers={'Accept': 'application/vnd.github+json',
-                                                                 'User-Agent': 'bbport-launcher'})
+def installable_releases(name=None):
+    """[(version, zip URL, page URL)] of the published releases of one channel from its oldest
+    installable version on, newest first (drafts, pre-releases and releases without a zip left
+    out). Each repository is listed on its own terms: the fork numbers from 2.0.0, the upstream
+    from 1.8.2."""
+    info = channels.of(name) if name else channel_info()
+    request = urllib.request.Request(info['list'], headers={'Accept': 'application/vnd.github+json',
+                                                            'User-Agent': 'bbport-launcher'})
     with urllib.request.urlopen(request, timeout=15) as response:
         releases = json.load(response)
     found = {}
@@ -3286,12 +3486,12 @@ def installable_releases():
         if release.get('draft') or release.get('prerelease') or not tag.startswith('windows-v'):
             continue
         version = '.'.join(re.findall(r'\d+', tag))
-        if not version or version_tuple(version) < version_tuple(OLDEST_INSTALLABLE):
+        if not version or version_tuple(version) < version_tuple(info['oldest']):
             continue
         url = next((asset['browser_download_url'] for asset in release.get('assets', [])
                     if asset.get('name', '').lower().endswith('.zip')), None)
         if url and version not in found:
-            found[version] = (version, url, release.get('html_url') or RELEASES_PAGE)
+            found[version] = (version, url, release.get('html_url') or info['page'])
     return sorted(found.values(), key=lambda item: version_tuple(item[0]), reverse=True)
 
 
@@ -3316,8 +3516,14 @@ def install_update(target, wait_pid):
         ctypes.windll.user32.MessageBoxW(None, _(
             'Could not install the update. Download it from the releases page.',
             'Не удалось установить обновление. Скачайте его со страницы релизов.'), 'Bloodborne', 0x10)
-        webbrowser.open(RELEASES_PAGE)
+        webbrowser.open(channel_info()['page'])
         return 1
+    # A copied installation inherits the channel of the copy it came from, so an updated upstream
+    # build never starts asking the fork for releases.
+    try:
+        channels.save(target, channels.read(PORT_DIR))
+    except (OSError, ValueError):
+        pass
     subprocess.Popen([str(target / 'Bloodborne.exe')], cwd=str(target))
     return 0
 
