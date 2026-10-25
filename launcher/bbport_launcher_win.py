@@ -51,7 +51,7 @@ NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # This build; GitHub release tags are windows-v<VERSION>. This fork numbers its own releases from
 # 2.0.0 so they never collide with the upstream ones (which stop in the 1.9.x series) and so a
 # channel switch compares releases of one repository only.
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 # The upstream release this fork's work is built on, named on the About page.
 UPSTREAM_BASE = '1.9.2'
 # Co-op: the community server that answers the game's own server requests.
