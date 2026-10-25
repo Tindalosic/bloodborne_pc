@@ -22,11 +22,14 @@ export USERPROFILE=${USERPROFILE:-$(cygpath -w "/c/Users/$(id -un)")}
 if [[ ! -x out/pyenv/Scripts/python.exe ]]; then
     "$python" -m venv out/pyenv
 fi
-out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller
-# The scripts run inside Bloodborne.exe (--script): the standard modules they import come along.
+out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller pillow
+# The scripts run inside Bloodborne.exe (--script): the standard modules they import come along,
+# and Pillow is named explicitly because the launcher imports it inside a try (art that Tk cannot
+# decode itself: the curated jpg/webp banner), which the static analysis does not follow.
 hidden=()
 for module in argparse base64 bisect collections contextlib hashlib json re shutil struct tempfile \
-              xml.etree.ElementTree urllib.request ctypes.wintypes; do
+              xml.etree.ElementTree urllib.request ctypes.wintypes \
+              PIL.Image PIL.ImageTk; do
     hidden+=(--hidden-import "$module")
 done
 out/pyenv/Scripts/python.exe -m PyInstaller --noconfirm --clean --log-level WARN --windowed \
@@ -40,6 +43,14 @@ dest=out/stage/bbport-windows
 rm -rf -- out/stage
 mkdir -p "$dest/bin" "$dest/launcher"
 cp -r out/pyi-dist/Bloodborne/. "$dest/"
+# PyInstaller 6.22.3 leaves the Tcl/Tk script libraries out of this build (its _tcl_data/_tk_data
+# collection silently finds nothing for a python.org 3.10), and without init.tcl Tk cannot start:
+# the frozen launcher dies before its window. Copy them in under the names its runtime hook uses.
+tclroot=$(cygpath -u "$("$python" -c 'import sysconfig; print(sysconfig.get_config_var("prefix"))')")/tcl
+for pair in '_tcl_data:tcl8.6' '_tk_data:tk8.6'; do
+    mkdir -p "$dest/_internal/${pair%%:*}"
+    cp -r "$tclroot/${pair#*:}/." "$dest/_internal/${pair%%:*}/"
+done
 llvm-strip -o "$dest/Play Bloodborne.exe" out/bb-play.exe
 cp launcher/bloodborne.ico launcher/bloodborne.png "$dest/launcher/"
 # The executables without debug information (out/ keeps the symbols for crash reports).
@@ -85,8 +96,10 @@ done
 find "$dest" -name __pycache__ -prune -exec rm -r {} +
 mkdir -p dist
 rm -f dist/bbport-windows.zip
-(cd out/stage && powershell -NoProfile -Command \
-    "Compress-Archive -Path bbport-windows -DestinationPath ../../dist/bbport-windows.zip")
+# Windows bsdtar, by absolute path: MSYS2's GNU tar reads the "D:" in the output path as a
+# remote host, and Compress-Archive treats -Path as a wildcard pattern, which breaks on an
+# installation folder with square brackets in it.
+(cd out/stage && /c/Windows/System32/tar.exe -a -c -f "$(cygpath -w "$PWD/../../dist/bbport-windows.zip")" bbport-windows)
 
 # Refresh dist/bbport-windows, keeping what players create there (saves, settings, mods), and
 # only while nothing runs from it: deleting a running launcher's files breaks it.

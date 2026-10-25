@@ -3528,6 +3528,27 @@ def install_update(target, wait_pid):
     return 0
 
 
+def tcl_environment():
+    """Point Tcl and Tk at the script folders the frozen build carries.
+
+    PyInstaller's tkinter runtime hook sets these only for its own _tcl_data/_tk_data layout.
+    Older packages, and builds whose Tcl collection silently found nothing, carry the plain
+    tcl/tk folders instead; without TCL_LIBRARY Tcl cannot find init.tcl and the launcher dies
+    before its window appears.
+    """
+    home = Path(getattr(sys, '_MEIPASS', PORT_DIR))
+    roots = (home, home / '_internal', PORT_DIR, PORT_DIR / '_internal')
+    for variable, names, marker in (('TCL_LIBRARY', ('_tcl_data', 'tcl'), 'init.tcl'),
+                                    ('TK_LIBRARY', ('_tk_data', 'tk'), 'tk.tcl')):
+        if os.environ.get(variable):
+            continue
+        for root in roots:
+            found = next((root / name for name in names if (root / name / marker).is_file()), None)
+            if found:
+                os.environ[variable] = str(found)
+                break
+
+
 def main():
     global LANG
     args = sys.argv[1:]
@@ -3548,6 +3569,7 @@ def main():
         pass
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
+    tcl_environment()
     root = tk.Tk()
     Launcher(root, tk, ttk, filedialog, messagebox)
     root.mainloop()
