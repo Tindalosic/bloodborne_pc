@@ -26,9 +26,12 @@ import tempfile
 import textwrap
 import threading
 import time
+import urllib.error
 import urllib.request
 import webbrowser
+from xml.etree import ElementTree
 import zipfile
+
 
 FROZEN = getattr(sys, 'frozen', False)
 PORT_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
@@ -3457,17 +3460,70 @@ def version_tuple(text):
     return tuple(int(number) for number in re.findall(r'\d+', text or ''))
 
 
+RELEASE_CACHE = {}  # {channel: (monotonic time, result)}: one lookup per window, not per click
+RELEASE_CACHE_SECONDS = 300
+
+
+def web_releases(info):
+    """[(tag, page URL)] of a repository's releases, newest first, read from its releases feed.
+
+    The anonymous GitHub API allows 60 requests an hour per address, and a router or a shared
+    connection spends that for everyone behind it: a released launcher then answers "rate limit
+    exceeded" to a player who did nothing wrong. The feed on github.com carries the same tags
+    without that quota, so it is the fallback whenever the API refuses."""
+    request = urllib.request.Request('https://github.com/%s/releases.atom' % info['repo'],
+                                     headers={'User-Agent': 'bbport-launcher'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        feed = ElementTree.fromstring(response.read())
+    namespace = '{http://www.w3.org/2005/Atom}'
+    found = []
+    for entry in feed.iter(namespace + 'entry'):
+        tag = entry.findtext(namespace + 'id') or ''
+        tag = tag.rsplit('/', 1)[-1]
+        link = entry.find(namespace + 'link')
+        page = link.get('href') if link is not None else ''
+        if tag:
+            found.append((tag, page or info['page']))
+    return found
+
+
+def web_assets(info, tag):
+    """The zip attached to one release, read from the assets fragment of its release page."""
+    url = 'https://github.com/%s/releases/expanded_assets/%s' % (info['repo'], tag)
+    request = urllib.request.Request(url, headers={'User-Agent': 'bbport-launcher'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        page = response.read().decode('utf-8', errors='replace')
+    names = re.findall(r'/releases/download/[^"/]+/([^"/]+)', page)
+    name = next((item for item in names if item.lower().endswith('.zip')), None)
+    return 'https://github.com/%s/releases/download/%s/%s' % (info['repo'], tag, name) if name else None
+
+
 def latest_release(name=None):
     """(version, zip URL, page URL) of the newest GitHub release of one channel."""
     info = channels.of(name) if name else channel_info()
-    request = urllib.request.Request(info['api'], headers={'Accept': 'application/vnd.github+json',
-                                                           'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
-        release = json.load(response)
-    version = '.'.join(re.findall(r'\d+', release['tag_name']))
-    url = next((asset['browser_download_url'] for asset in release.get('assets', [])
-                if asset.get('name', '').lower().endswith('.zip')), None)
-    return version, url, release.get('html_url') or info['page']
+    cached = RELEASE_CACHE.get(info['repo'])
+    if cached and time.monotonic() - cached[0] < RELEASE_CACHE_SECONDS:
+        return cached[1]
+    try:
+        request = urllib.request.Request(info['api'], headers={'Accept': 'application/vnd.github+json',
+                                                               'User-Agent': 'bbport-launcher'})
+        with urllib.request.urlopen(request, timeout=15) as response:
+            release = json.load(response)
+        version = '.'.join(re.findall(r'\d+', release['tag_name']))
+        url = next((asset['browser_download_url'] for asset in release.get('assets', [])
+                    if asset.get('name', '').lower().endswith('.zip')), None)
+        result = version, url, release.get('html_url') or info['page']
+    except urllib.error.HTTPError as failure:
+        if failure.code not in (403, 429):
+            raise
+        releases = web_releases(info)
+        if not releases:
+            raise
+        tag, page = releases[0]
+        version = '.'.join(re.findall(r'\d+', tag))
+        result = version, web_assets(info, tag), page
+    RELEASE_CACHE[info['repo']] = (time.monotonic(), result)
+    return result
 
 
 def installable_releases(name=None):
@@ -3476,10 +3532,26 @@ def installable_releases(name=None):
     out). Each repository is listed on its own terms: the fork numbers from 2.0.0, the upstream
     from 1.8.2."""
     info = channels.of(name) if name else channel_info()
-    request = urllib.request.Request(info['list'], headers={'Accept': 'application/vnd.github+json',
-                                                            'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
-        releases = json.load(response)
+    try:
+        request = urllib.request.Request(info['list'], headers={'Accept': 'application/vnd.github+json',
+                                                                'User-Agent': 'bbport-launcher'})
+        with urllib.request.urlopen(request, timeout=15) as response:
+            releases = json.load(response)
+    except urllib.error.HTTPError as failure:
+        if failure.code not in (403, 429):
+            raise
+        # Rate limited: the feed lists the tags, and only the pages of the versions that matter
+        # are opened for their asset names (a handful of requests, not a hundred).
+        candidates = [('.'.join(re.findall(r'\d+', tag)), tag, page)
+                      for tag, page in web_releases(info) if tag.startswith('windows-v')]
+        found = {}
+        for version, tag, page in candidates:
+            if not version or version_tuple(version) < version_tuple(info['oldest']):
+                continue
+            url = web_assets(info, tag)
+            if url and version not in found:
+                found[version] = (version, url, page)
+        return sorted(found.values(), key=lambda item: version_tuple(item[0]), reverse=True)
     found = {}
     for release in releases:
         tag = release.get('tag_name', '')
